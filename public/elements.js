@@ -116,11 +116,9 @@ class ItemDropdown extends HTMLDivElement {
         <img class="dropbtn" src="">
         `.trim();
     this.content = this.querySelector(".dropdown-content");
-
-
     this.img = this.querySelector('.dropbtn');
     this.querySelector(".dropbtn").addEventListener('click', event => this.toggleDropdown(event));
-
+    
   }
 
   setEnabled(enable){

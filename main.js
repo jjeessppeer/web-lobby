@@ -2,6 +2,7 @@ var express = require('express');
 const crypto = require('crypto');
 var fs = require('fs');
 var http = require('http');
+const gameData = require('./gameData.js');
 // var https = require('https');
 
 // var bodyParser = require("body-parser");
@@ -91,6 +92,9 @@ class Lobby {
         this.members = {};
         this.pilots = {};
         this.ships = {};
+        // for (let i=0; i<this.team_size; i++){
+        //   this.ships.push([0, [0, 0, 0, 0]]);
+        // }
 
         this.gun_bans = [];
         this.ship_bans = [];
@@ -117,7 +121,23 @@ class Lobby {
           this.stepPhase();
         }
         this.timer = this.round_time - (time - this.phaseStartTime)/1000;
-      } 
+      }
+
+      // Make sure builds are valid.
+      for (let i=0; i<2*this.team_size; i++){
+        if (!(i in this.ships)) continue;
+        
+        // Only check non locked ships.
+        if (this.timelineCheck(i, 'ship-gun-pick') < 0) continue;
+
+        // Fix loadout if not valid.
+        if (!this.loadoutAllowed(this.ships[i][0], this.ships[i][1])){
+          console.log("fixing loadout");
+          this.ships[i] = this.legalizeLoadout(this.ships[i][0], this.ships[i][1]);
+        }
+      }
+      // return ships;
+
     }
 
     stepPhase(){
@@ -160,17 +180,13 @@ class Lobby {
       return user_token;
     }
 
-    // isLocked(role){
-    //   let timelineStr = `T${role%2==0 ? "1" : "2"}S${(role - (role%2)) / 2 + 1} ship-gun-pick`;
-    //   let lockPhase = this.timeline.indexOf(timelineStr);
-    //   return this.phase > lockPhase;
-    // }
-
     timelineCheck(role, command, target_phase){
       // 0 is current phase
       // >0 is future phase
       // <0 is past phase
       let timelineStr = `T${role%2==0 ? "1" : "2"}S${(role - (role%2)) / 2 + 1} ${command}`;
+
+      if (target_phase == undefined) target_phase = this.timeline.indexOf(timelineStr);
       if (this.timeline[target_phase] != timelineStr) return -1;
 
       // let targetPhase = this.timeline.indexOf(timelineStr);
@@ -188,11 +204,73 @@ class Lobby {
       return count;
     }
 
+    loadoutAllowed(ship, guns){
+      let shipbanCount = this.commandCount('ship-ban', this.phase);
+      let gunbanCount = this.commandCount('gun-ban', this.phase);
+      let ship_bans = this.ship_bans.slice(0, shipbanCount);
+      let gun_bans = this.gun_bans.slice(0, gunbanCount);
+      if (ship_bans.includes(ship)) return false;
+      for (let i=0; i<guns.length; i++){
+        if (gun_bans.includes(guns[i])) return false;
+      }
+      return true;
+    }
+
+    legalizeLoadout(ship, guns){
+      console.log(JSON.stringify(this.gun_bans));
+      console.log(JSON.stringify(this.ship_bans));
+      console.log("ori: " + JSON.stringify([ship, guns]));
+
+      let shipbanCount = this.commandCount('ship-ban', this.phase);
+      let gunbanCount = this.commandCount('gun-ban', this.phase);
+      let ship_bans = this.ship_bans.slice(0, shipbanCount);
+      let gun_bans = this.gun_bans.slice(0, gunbanCount);
+
+      // fix ship
+      let first_allowed_light_gun = -1;
+      let first_allowed_heavy_gun = -1;
+      let first_allowed_ship = -1;
+
+      for (let i=0; i<gameData.guns.length; i++){
+        if (!gun_bans.includes(i)){
+          first_allowed_light_gun = i;
+          break;
+        }
+      }
+      for (let i=0; i<gameData.ships.length; i++){
+        if (!ship_bans.includes(i)){
+          first_allowed_ship = i;
+          break;
+        }
+      }
+
+      // Ship is banned
+      if (ship_bans.includes(ship)) {
+        ship = first_allowed_ship;
+        guns = [];
+        for (let i=0; i<gameData.ships[i].guns.length; i++) {
+          guns.push(first_allowed_light_gun);
+        }
+        return [ship, guns];
+      }
+
+      // Fix banned guns
+      for (let i=0; i<guns.length; i++){
+        // Banned gun
+        if (gun_bans.includes(guns[i])){
+          guns[i] = first_allowed_light_gun;
+        }
+      }
+      console.log("fix: " + JSON.stringify([ship, guns]));
+      return [ship, guns];
+    }
+
     updateLoadout(loadout, user_token, target_phase){
       let shipIdx = this.members[user_token].role;
       if (shipIdx < 0) return;
       // if (this.isLocked(shipIdx)) return;
       if (this.timelineCheck(shipIdx, 'ship-gun-pick', target_phase) < 0) return;
+      if (!this.loadoutAllowed(loadout[0], loadout[1])) return;
       this.ships[shipIdx] = [loadout[0], loadout[1]];
     }
 

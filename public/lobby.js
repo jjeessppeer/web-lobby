@@ -6,24 +6,26 @@ var timer_start = Date.now();
 var timer_time = -1;
 
 var current_phase;
-// var lobby_initialized
 
-// function parseTimelineArg(timelineStr){
-//   const commandFunctions
-// }
-
-// function timelineArgToString(){
-//   const command_dict = {
-//     0: "ship-gun-pick",
-//     1: "ship-ban"
-//   };
-
-// }
+var banned_ships = [];
+var banned_guns = [];
 
 function updateLocal(){
   let time_passed = Math.round((Date.now() - timer_start)/1000);
   let time_left = Math.max(timer_time - time_passed, 0);
   document.getElementById('lobbyTimer').textContent = `${Math.floor(time_left/60)}:${time_left%60}`;
+}
+
+function updateBans(){
+  // if (user_role < 0) return;
+  // let shipElement = lobby_ships[user_role];
+
+  // let allowedShips = [];
+  // for (let i=0; i<ships.length; i++){
+  //   if (banned_ships.includes(i)) continue;
+  //   allowedShips.push(ships[i]);
+  // }
+  // shipElement.shipDropdown.setContent(allowedShips);
 }
 
 function targetToIdx(target){
@@ -50,8 +52,6 @@ function initializeLobby(ruleset) {
 
     let red_ship = document.createElement('div', { is: 'lobby-ship-item' });
     let blue_ship = document.createElement('div', { is: 'lobby-ship-item' });
-    // red_ship.name = lobby_init_data.names[2 * i];
-    // blue_ship.name = lobby_init_data.names[2 * i + 1];
     red_ship.setIsMine(false);
     blue_ship.setIsMine(false);
     red_ship.setStatus('');
@@ -120,6 +120,8 @@ function updateLobbyState(lobbyStateData, ruleset) {
   }
 
   current_phase = lobbyStateData.phase;
+  banned_ships = [];
+  banned_guns = [];
 
   // Update timer
   document.getElementById('lobbyTimer').textContent = `${Math.floor(lobbyStateData.timer/60)}:${lobbyStateData.timer%60}`;
@@ -150,6 +152,7 @@ function updateLobbyState(lobbyStateData, ruleset) {
       if (command == "ship-ban"){
         let shipBan = lobbyStateData.ship_bans[shipBanIdx++];
         if (shipBan != -1){
+          banned_ships.push(shipBan);
           let img = document.createElement('img');
           img.src = ships[shipBan].img;
           img.classList.add(shipIdx % 2 != 0 ? "blue" : "red");
@@ -159,6 +162,7 @@ function updateLobbyState(lobbyStateData, ruleset) {
       if (command == "gun-ban"){
         let gunBan = lobbyStateData.gun_bans[gunBanIdx++];
         if (gunBan != -1){
+          banned_guns.push(gunBan);
           let img = document.createElement('img');
           img.src = light_guns[gunBan].img;
           img.classList.add(shipIdx % 2 != 0 ? "blue" : "red");
@@ -178,8 +182,7 @@ function updateLobbyState(lobbyStateData, ruleset) {
         gunBanElem.style.display = "block";
         gunBanElem.setInteractive(shipIdx == user_role);
         let gunIdx = lobbyStateData.gun_bans[gunBanIdx++];
-        if (shipIdx != user_role)
-          gunBanElem.dropdown.selectItem(light_guns[gunIdx].name, light_guns[gunIdx].img, gunIdx);
+        gunBanElem.dropdown.selectItem(light_guns[gunIdx].name, light_guns[gunIdx].img, gunIdx);
       }
       else{
         document.getElementById('gunBanElem').style.display = "none";
@@ -190,7 +193,6 @@ function updateLobbyState(lobbyStateData, ruleset) {
         shipBanElem.style.display = "block";
         shipBanElem.setInteractive(shipIdx == user_role);
         let shipItemIdx = lobbyStateData.ship_bans[shipBanIdx++];
-        if (shipIdx != user_role)
         shipBanElem.dropdown.selectItem(ships[shipItemIdx].name, ships[shipItemIdx].img, shipItemIdx);
       }
       else{
@@ -206,49 +208,29 @@ function updateLobbyState(lobbyStateData, ruleset) {
     else if (lobbyStateData.phase == i) 
       lobby_phases[i].classList.add('active');
   }
+  
+  updateBans();
 
 }
 
 function postLoadout(loadoutArray){
-  console.log(`Posting loadout ${JSON.stringify(loadoutArray)}`);
+  // console.log(`Posting loadout ${JSON.stringify(loadoutArray)}`);
   let timelineStr = `T${user_role%2==0 ? "1" : "2"}S${(user_role - (user_role%2)) / 2 + 1} ship-gun-pick`;
   let target_phase = active_ruleset.timeline.indexOf(timelineStr);
-  console.log("TP: " + target_phase);
-  httpxPostRequest("/loadout_change", { "lobby_id": current_lobby_id, "user_token": user_token, "target_phase": target_phase, "loadout": loadoutArray}, (response, status) => {
-    if (status == 200){
-      console.log(`Loadout posted ${response}`);
-    }
-    else {
-      console.log(`${response}`);
-    }
-  });
+  httpxPostRequest("/loadout_change", { "lobby_id": current_lobby_id, "user_token": user_token, "target_phase": target_phase, "loadout": loadoutArray}, (response, status) => { });
 }
 
 function lockLoadout(){
-  console.log(`Locking loadout.`);
-  let timelineStr = `T${user_role%2==0 ? "1" : "2"}S${(user_role - (user_role%2)) / 2 + 1} ship-gun-pick`;
-  let target_phase = active_ruleset.timeline.indexOf(timelineStr);
-  httpxPostRequest("/lock_loadout", { "lobby_id": current_lobby_id, "user_token": user_token, "target_phase": target_phase}, (response, status) => {
-    if (status == 200){
-      console.log("Loadout lock OK " + response);
-    }
-    else {
-      console.log("Loadout lock FAIL " + response);
-    }
-  });
+  // let timelineStr = `T${user_role%2==0 ? "1" : "2"}S${(user_role - (user_role%2)) / 2 + 1} ship-gun-pick`;
+  // let target_phase = active_ruleset.timeline.indexOf(timelineStr);
+  httpxPostRequest("/lock_loadout", { "lobby_id": current_lobby_id, "user_token": user_token, "target_phase": current_phase}, (response, status) => {});
 }
 
 function postGunBan(gun){
-  console.log("Posting gun ban " + gun);
-  // let timelineStr = `T${user_role%2==0 ? "1" : "2"}S${(user_role - (user_role%2)) / 2 + 1} gun-ban`;
-  // let target_phase = active_ruleset.timeline.indexOf(timelineStr);
   httpxPostRequest("/ban_gun", { "lobby_id": current_lobby_id, "user_token": user_token, "target_phase": current_phase, "gun": gun}, (response, status) => {});
 }
 
 function postShipBan(ship){
-  console.log("Posting ship ban " + ship);
-  // let timelineStr = `T${user_role%2==0 ? "1" : "2"}S${(user_role - (user_role%2)) / 2 + 1} ship-ban`;
-  // let target_phase = active_ruleset.timeline.indexOf(timelineStr);
   httpxPostRequest("/ban_ship", { "lobby_id": current_lobby_id, "user_token": user_token, "target_phase": current_phase, "ship": ship}, (response, status) => {});
 }
 
