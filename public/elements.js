@@ -173,10 +173,18 @@ class BanElement extends HTMLDivElement {
     this.banBtn = this.querySelector('button:nth-child(1)');
     this.skipBtn = this.querySelector('button:nth-child(2)');
     this.header = this.querySelector('h3');
-    // this.dropdown.addEventListener('item-selected', event => this.shipSelected(event.target.img.title));
     this.setBanType('ship');
     this.querySelector('div').prepend(this.dropdown);
     // // this.prepend(this.dropdown);
+    
+    this.dropdown.addEventListener('item-selected', event => {
+      let item_id = parseInt(this.dropdown.img.dataset.item_id);
+      if (this.ban_type == 'gun')
+        postGunBan(item_id);
+      else if (this.ban_type == 'ship')
+        postShipBan(item_id);
+    });
+
   
   }
 
@@ -187,6 +195,7 @@ class BanElement extends HTMLDivElement {
   }
 
   setBanType(banType){
+    this.ban_type = banType;
     if (banType == "ship"){
       this.header.textContent = "Ban ship";
       this.dropdown.setContent(ships);

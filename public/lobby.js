@@ -106,6 +106,20 @@ function initializeLobby(ruleset) {
     document.getElementById('lobbyStatus').append(li);
   }
 
+  let gunBanElem = document.createElement('div', { is: 'lobby-ban-element' });
+  gunBanElem.setBanType('gun');
+  gunBanElem.setInteractive(false);
+  gunBanElem.id = "gunBanElem";
+  gunBanElem.style.display = "none";
+  document.getElementById('lobbyBanDiv').append(gunBanElem);
+
+  let shipBanElem = document.createElement('div', { is: 'lobby-ban-element' });
+  shipBanElem.setBanType('ship');
+  shipBanElem.setInteractive(false);
+  shipBanElem.id = "shipBanElem";
+  shipBanElem.style.display = "none";
+  document.getElementById('lobbyBanDiv').append(shipBanElem);
+
 
   // setInterval();
   setInterval(updateLocal, 200);
@@ -151,10 +165,11 @@ function updateLobbyState(lobbyStateData, ruleset) {
 
   document.getElementById('shipBans').innerHTML = "";
   document.getElementById('gunBans').innerHTML = "";
-  document.getElementById('lobbyBottomSpace').innerHTML = "";
+  // document.getElementById('lobbyBanDiv').innerHTML = "";
 
   // Update from timeline
   for (let i=0; i<ruleset.timeline.length; i++){
+
     let timelineArgs = ruleset.timeline[i].split(" ");
     let shipIdx = targetToIdx(timelineArgs[0]);
     if (shipIdx != -1) command = timelineArgs.slice(1).join(" ");
@@ -186,29 +201,40 @@ function updateLobbyState(lobbyStateData, ruleset) {
       // Someone currently banning gun
       if (command == "gun-ban") {
         lobby_ships[shipIdx].setStatus('BANNING GUN');
-
-        let banElem = document.createElement('div', { is: 'lobby-ban-element' });
-        banElem.setBanType('gun');
-        banElem.setInteractive(shipIdx == user_role);
-        
-        // TODO: only update selection if not my ship
+        let gunBanElem = document.getElementById('gunBanElem');
+        gunBanElem.style.display = "block";
+        gunBanElem.setInteractive(shipIdx == user_role);
         let gunIdx = lobbyStateData.gun_bans[gunBanIdx++];
-        banElem.dropdown.selectItem(light_guns[gunIdx].name, light_guns[gunIdx].img, gunIdx);
-
-        document.getElementById('lobbyBottomSpace').append(banElem);
+        if (shipIdx != user_role)
+          gunBanElem.dropdown.selectItem(light_guns[gunIdx].name, light_guns[gunIdx].img, gunIdx);
       }
-      if (command == "ship-ban"){
+      else{
+        document.getElementById('gunBanElem').style.display = "none";
+      }
+      if (command == "ship-ban") {
         lobby_ships[shipIdx].setStatus('BANNING SHIP');
-        let banElem = document.createElement('div', { is: 'lobby-ban-element' });
-        banElem.setBanType('ship');
-        banElem.setInteractive(shipIdx == user_role);
-        
-        // TODO: only update selection if not my ship
-        let idx = lobbyStateData.ship_bans[shipBanIdx++];
-        banElem.dropdown.selectItem(ships[idx].name, ships[idx].img, idx);
-        document.getElementById('lobbyBottomSpace').append(banElem);
-
+        let shipBanElem = document.getElementById('shipBanElem');
+        shipBanElem.style.display = "block";
+        shipBanElem.setInteractive(shipIdx == user_role);
+        let shipItemIdx = lobbyStateData.ship_bans[shipBanIdx++];
+        if (shipIdx != user_role)
+        shipBanElem.dropdown.selectItem(ships[shipItemIdx].name, ships[shipItemIdx].img, shipItemIdx);
       }
+      else{
+        document.getElementById('shipBanElem').style.display = "none";
+      }
+      // if (command == "ship-ban"){
+      //   lobby_ships[shipIdx].setStatus('BANNING SHIP');
+      //   let banElem = document.createElement('div', { is: 'lobby-ban-element' });
+      //   banElem.setBanType('ship');
+      //   banElem.setInteractive(shipIdx == user_role);
+        
+      //   // TODO: only update selection if not my ship
+      //   let idx = lobbyStateData.ship_bans[shipBanIdx++];
+      //   banElem.dropdown.selectItem(ships[idx].name, ships[idx].img, idx);
+      //   document.getElementById('lobbyBanDiv').append(banElem);
+
+      // }
     }
 
     // Update displayed timeline
@@ -249,4 +275,20 @@ function lockLoadout(){
       console.log("Loadout lock FAIL " + response);
     }
   });
+}
+
+function postGunBan(gun){
+  console.log("Posting gun ban " + gun);
+  // TODO: support for multiple ban rounds per pilot
+  let timelineStr = `T${user_role%2==0 ? "1" : "2"}S${(user_role - (user_role%2)) / 2 + 1} gun-ban`;
+  let target_phase = active_ruleset.timeline.indexOf(timelineStr);
+  httpxPostRequest("/ban_gun", { "lobby_id": current_lobby_id, "user_token": user_token, "target_phase": target_phase, "gun": gun}, (response, status) => {});
+}
+
+function postShipBan(ship){
+  console.log("Posting ship ban " + ship);
+  // TODO: support for multiple ban rounds per pilot
+  let timelineStr = `T${user_role%2==0 ? "1" : "2"}S${(user_role - (user_role%2)) / 2 + 1} ship-ban`;
+  let target_phase = active_ruleset.timeline.indexOf(timelineStr);
+  httpxPostRequest("/ban_ship", { "lobby_id": current_lobby_id, "user_token": user_token, "target_phase": target_phase, "ship": ship}, (response, status) => {});
 }

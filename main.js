@@ -92,6 +92,16 @@ class Lobby {
         this.pilots = {};
         this.ships = {};
 
+        this.gun_bans = [];
+        this.ship_bans = [];
+
+        for (let i=0; i<this.commandCount('gun-ban', this.timeline.length); i++){
+          this.gun_bans.push(0);
+        }
+        for (let i=0; i<this.commandCount('ship-ban', this.timeline.length); i++){
+          this.ship_bans.push(0);
+        }
+
         this.intervalId = setInterval(() => this.update(), 1000);
     }
 
@@ -167,7 +177,16 @@ class Lobby {
       return target_phase - this.phase;
     }
 
-
+    commandCount(query_command, target_phase){
+      // Return the number of times the command occurs in the timeline before phase.
+      let endIdx = Math.min(target_phase, this.timeline.length);
+      let count = 0;
+      for (let i=0; i<endIdx; i++){
+        let [target, command] = this.timeline[i].split(' ');
+        if (command == query_command) count++;
+      }
+      return count;
+    }
 
     updateLoadout(loadout, user_token, target_phase){
       let shipIdx = this.members[user_token].role;
@@ -183,6 +202,31 @@ class Lobby {
       if (this.timelineCheck(shipIdx, 'ship-gun-pick', target_phase) != 0) return;
       this.stepPhase();
     }
+
+    updateGunBan(user_token, target_phase, gun){
+      let shipIdx = this.members[user_token].role;
+      if (shipIdx < 0) return;
+      if (this.timelineCheck(shipIdx, 'gun-ban', target_phase) != 0) return;
+      let banIdx = this.commandCount('gun-ban', target_phase);
+      this.gun_bans[banIdx] = gun;
+    }
+
+    updateShipBan(user_token, target_phase, ship){
+      let shipIdx = this.members[user_token].role;
+      if (shipIdx < 0) return;
+      if (this.timelineCheck(shipIdx, 'ship-ban', target_phase) != 0) return;
+      let banIdx = this.commandCount('ship-ban', target_phase);
+      this.ship_bans[banIdx] = ship;
+    }
+
+    lockGunBan(user_token, target_phase){
+
+    }
+    skipGunBan(user_token, target_phase){
+
+    }
+
+
 
     getNameList(){
       let names = [];
@@ -207,8 +251,8 @@ class Lobby {
           "timer": Math.floor(this.timer),
           "phase": this.phase,
           "ships": this.getShipList(),
-          "ship_bans": [0, 1],
-          "gun_bans": [4, 1],
+          "ship_bans": this.ship_bans,
+          "gun_bans": this.gun_bans,
           "names": this.getNameList()
         };
     }
@@ -379,6 +423,7 @@ app.post('/lock_loadout', function(req, res){
   }
   catch{
     res.status(400).send();
+    return;
   }
 
   lobbies[req.body.lobby_id].lockLoadout(req.body.user_token, req.body.target_phase);
@@ -387,19 +432,29 @@ app.post('/lock_loadout', function(req, res){
 });
 
 app.post('/ban_ship', function(req, res){
-  try{
+  // try{
     verifyLobbyRequest(req.body);
-  }
-  catch{
-    res.status(400).send();
-  }
+    assert('ship' in req.body);
+    assert(Number.isInteger(req.body.ship));
+  // }
+  // catch{
+  //   res.status(400).send();
+  //   return;
+  // }
+  lobbies[req.body.lobby_id].updateShipBan(req.body.user_token, req.body.target_phase, req.body.ship);
+  res.status(200).send("Gun ban updated");
 });
 
 app.post('/ban_gun', function(req, res){
   try{
     verifyLobbyRequest(req.body);
+    assert('gun' in req.body);
+    assert(Number.isInteger(req.body.gun));
   }
   catch{
     res.status(400).send();
+    return;
   }
+  lobbies[req.body.lobby_id].updateGunBan(req.body.user_token, req.body.target_phase, req.body.gun);
+  res.status(200).send("Gun ban updated");
 });

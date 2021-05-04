@@ -3,13 +3,13 @@ var test_ruleset = {
   "team_size": 2,
   "timeline": [
           "Waiting for pilots to join",
-          "Waiting for lobby start",
-          // "T2S1 ship-ban", 
-          // "T1S1 ship-ban", 
+          // "Waiting for lobby start",
+          "T1S1 ship-ban", 
+          "T2S1 ship-ban", 
+          "T1S1 gun-ban",
+          "T2S1 gun-ban",
           "T1S1 ship-gun-pick", 
           "T2S1 ship-gun-pick",
-          "T2S2 gun-ban",
-          "T1S2 gun-ban",
           "T1S2 ship-gun-pick", 
           "T2S2 ship-gun-pick"
         ],

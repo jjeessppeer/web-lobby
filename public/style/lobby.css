@@ -100,7 +100,7 @@
     outline-color: var(--red);
 }
 
-#lobbyBottomSpace {
+.lobbyBottomSpace {
     flex-grow: 1;
     min-height: 200px;
 }
