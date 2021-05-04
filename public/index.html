@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <title>Best Lobbies</title>
+  <link rel="icon" href="blimp-icon.png" type="image/x-icon" />
+
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <link rel="stylesheet" href="style/style.css">
+  <link rel="stylesheet" href="style/menu.css">
+  <link rel="stylesheet" href="style/lobby.css">
+  <link rel="stylesheet" href="style/dropdown.css">
+  
+  <script src="utils.js"></script>
+  <script src="data.js"></script>
+  <script src="elements.js"></script>
+  <script src="menu.js"></script>
+  <script src="lobby.js"></script>
+</head>
+
+<body>
+  <div id="lobbyJoinModal" class="modal">
+    <!-- Modal content -->
+    <div class="modal-content">
+      <h3>Joining lobby <span id="modalLobbyName">111</span></h3>
+      <table id="lobbyJoinFinalizer" class="settingsTable">
+        <tr>
+          <td>Name</td>
+          <td><input id="joinNameInput" type="text" placeholder="" value=""></td>
+        </tr>
+        <tr>
+          <td>Team</td>
+          <td>
+            <select id="joinTeamInput">
+              <option value="0">Red pilot 1</option>
+              <option value="2">Red pilot 2</option>
+              <option value="-1">Red crew</option>
+              <option value="1">Blue pilot 1</option>
+              <option value="3">Blue pilot 2</option>
+              <option value="-2">Blue crew</option>
+              <option value="-3" selected>Spectator</option>
+              <option value="-4">Moderator</option>
+            </select>
+          </td>
+        </tr>
+
+      </table>
+      <button id="join2Btn">Join</button>
+    </div>
+  </div>
+
+  <div id="lobbyScreen" style="display:none">
+    <div id="lobbyPanel">
+      <div id="lobbyRedTeam" class="column">
+      </div>
+      <div id="lobbyCenter" class="column">
+        <div id="lobbyTimer">1:00</div>
+        <br>
+        <ul id="lobbyStatus">
+          <li class="done">Waiting for pilots to join</li>
+          <li class="done">Blue ban ship</li>
+          <li class="done">Red ban ship</li>
+          <li class="done">Blue 1 select ship</li>
+          <li class="done">Red 1 select ship</li>
+          <li class="active">Red ban weapon</li>
+          <li>Blue ban weapon</li>
+          <li >Red 2 select ship</li>
+          <li>Blue 2 select ship</li>
+        </ul>
+        <!-- <br> -->
+        <div id="lobbyBans">
+          <div class="column">
+            Ship bans
+            <div id="shipBans" >
+              <img class="blue" src="images/ships/Junker.jpg">
+              <img class="red" src="images/ships/Junker.jpg">
+            </div>
+          </div>
+          <div class="column">
+            Gun bans
+            <div id="gunBans">
+              <img class="red" src="images/guns/Artemis.jpg">
+              <img class="blue" src="images/guns/Flamethrower.jpg">
+            </div>
+          </div>
+        </div>
+        <div id="lobbyBottomSpace">
+        </div>
+      </div>
+      <div id="lobbyBlueTeam" class="column">
+      </div>
+    </div>
+  </div>
+
+  <div id="startScreen" style="display:block;">
+    <div id="menuHeading">
+      Lobbies of lobbies of lobbies of lobbies of lobbies of lobbies of lobbies of lobbies of lobbies of lobbies of lobbies of lobbies of lobbies of lobbies of lobbies of lobbies of lobbies of lobbies of lobbies of lobbies of lobbies of lobbies of lobbies of lobbies of lobbies of lobbies of lobbies
+    </div>
+    <div id="createMenuPanel">
+      <h2>Create new lobby</h2>
+      <br>
+      <table id="lobbySettingsTable" class="settingsTable">
+        <tr>
+          <td>Team size</td>
+          <td><input id="nShipsInput" type="number" placeholder="" value="2"></td>
+        </tr>
+        <tr>
+          <td>Round time (s)</td>
+          <td><input id="roundTimeInput" type="number" placeholder="" value="60"></td>
+        </tr>
+        <tr>
+          <td><label for="moderatedInput">Moderated</label></td>
+          <td><input id="moderatedInput" type="checkbox"></td>
+        </tr>
+        <tr>
+          <td>Lobby password</td>
+          <td><input id="lobbyPwdInput" type="text" placeholder="" value=""></td>
+        </tr>
+
+      </table>
+      <button id="createLobbyBtn">Create lobby</button>
+      
+    </div>
+    <div id="joinMenuPanel">
+      <h2>Join lobby</h2>
+      <table id="joinSettingsTable" class="settingsTable">
+        <tr>
+          <td>Lobby id</td>
+          <td><input id="lobbyIdInput" type="text" placeholder="" value=""></td>
+        </tr>
+        <tr>
+          <td>Password</td>
+          <td><input id="joinLobbyPassword" type="text" placeholder="" value=""></td>
+        </tr>
+      </table>
+      <button id="joinLobbyBtn">Join lobby</button>
+    </div>
+  </div>
+
+  <script>
+    console.log("hello");
+    initializeMenu();
+
+    
+
+    
+
+    // initializeLobby(lobby_init_data);
+    // updateLobbyState(lobby_state);
+    // window.setInterval(function(){
+    //   updateLobbyState(lobby_state);
+    //   lobby_state.phase += 1;
+    // }, 2000);
+
+    window.addEventListener('click', function (event) {
+        var dropdowns = document.querySelectorAll(".dropdown");
+        for (let i = 0; i < dropdowns.length; i++) {
+          if (dropdowns[i].querySelector(".dropbtn") == event.target) continue;
+          dropdowns[i].classList.remove('active');
+        }
+    })
+
+    
+
+    // httpxPostRequest("/create_lobby", "notobj", function(response){
+    //   console.log(`Response ${response} ${this}`);
+    // });
+
+    
+
+    
+  </script>
+</body>
+</body>
