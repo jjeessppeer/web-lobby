@@ -34,6 +34,11 @@
 
 var lobby_ships = [];
 var lobby_phases = [];
+
+var timer_start = Date.now();
+var timer_time = -1;
+
+var current_phase;
 // var lobby_initialized
 
 // function parseTimelineArg(timelineStr){
@@ -47,6 +52,12 @@ var lobby_phases = [];
 //   };
 
 // }
+
+function updateLocal(){
+  let time_passed = Math.round((Date.now() - timer_start)/1000);
+  let time_left = Math.max(timer_time - time_passed, 0);
+  document.getElementById('lobbyTimer').textContent = `${Math.floor(time_left/60)}:${time_left%60}`;
+}
 
 function targetToIdx(target){
   if (target == undefined) return -1;
@@ -97,14 +108,15 @@ function initializeLobby(ruleset) {
 
 
   // setInterval();
+  setInterval(updateLocal, 200);
   requestLobbyUpdate();
 }
 
 function requestLobbyUpdate(){
-  console.log(`Requesting state update ${current_lobby_id}, ${user_token}`);
+  // console.log(`Requesting state update ${current_lobby_id}, ${user_token}`);
   httpxPostRequest("/lobby_state", { "lobby_id": current_lobby_id, "user_token": user_token }, (response, status) => {
     if (status == 200){
-      console.log(`State update recieved ${response}`);
+      // console.log(`State update recieved ${response}`);
       response = JSON.parse(response);
       updateLobbyState(response, active_ruleset);
       setTimeout(() => requestLobbyUpdate(active_ruleset), 1000);
@@ -125,6 +137,14 @@ function updateLobbyState(lobbyStateData, ruleset) {
     lobby_ships[i].setStatus('');
     lobby_ships[i].setPicking(false);
   }
+
+  current_phase = lobbyStateData.phase;
+
+  // Update timer
+  document.getElementById('lobbyTimer').textContent = `${Math.floor(lobbyStateData.timer/60)}:${lobbyStateData.timer%60}`;
+  timer_time = lobbyStateData.timer;
+  timer_start = Date.now();
+
 
   let shipBanIdx = 0;
   let gunBanIdx = 0;
@@ -204,12 +224,29 @@ function updateLobbyState(lobbyStateData, ruleset) {
 
 function postLoadout(loadoutArray){
   console.log(`Posting loadout ${JSON.stringify(loadoutArray)}`);
-  httpxPostRequest("/loadout_change", { "lobby_id": current_lobby_id, "user_token": user_token, "loadout": loadoutArray}, (response, status) => {
+  let timelineStr = `T${user_role%2==0 ? "1" : "2"}S${(user_role - (user_role%2)) / 2 + 1} ship-gun-pick`;
+  let target_phase = active_ruleset.timeline.indexOf(timelineStr);
+  console.log("TP: " + target_phase);
+  httpxPostRequest("/loadout_change", { "lobby_id": current_lobby_id, "user_token": user_token, "target_phase": target_phase, "loadout": loadoutArray}, (response, status) => {
     if (status == 200){
       console.log(`Loadout posted ${response}`);
     }
     else {
       console.log(`${response}`);
+    }
+  });
+}
+
+function lockLoadout(){
+  console.log(`Locking loadout.`);
+  let timelineStr = `T${user_role%2==0 ? "1" : "2"}S${(user_role - (user_role%2)) / 2 + 1} ship-gun-pick`;
+  let target_phase = active_ruleset.timeline.indexOf(timelineStr);
+  httpxPostRequest("/lock_loadout", { "lobby_id": current_lobby_id, "user_token": user_token, "target_phase": target_phase}, (response, status) => {
+    if (status == 200){
+      console.log("Loadout lock OK " + response);
+    }
+    else {
+      console.log("Loadout lock FAIL " + response);
     }
   });
 }

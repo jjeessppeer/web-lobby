@@ -49,11 +49,13 @@ function cleanLobbies(){
   // console.log("Cleaning up lobbies.");
 }
 
-function verifyLobbyRequest(request){
-  assert('lobby_id' in req.body);
-  assert('user_token' in req.body);
-  assert(req.body.lobby_id in lobbies);
-  assert(req.body.user_token in lobbies[req.body.lobby_id].members);
+function verifyLobbyRequest(body){
+  assert('lobby_id' in body);
+  assert('user_token' in body);
+  assert('target_phase' in body);
+  assert(body.lobby_id in lobbies);
+  assert(body.user_token in lobbies[body.lobby_id].members);
+  assert(Number.isInteger(body.target_phase));
 }
 
 setInterval(cleanLobbies, 1000);
@@ -94,19 +96,24 @@ class Lobby {
     }
 
     update(){
-      if (this.phase == 0 && Object.keys(this.pilots).length == this.team_size*2) {
+      // if (this.phase == 0 && Object.keys(this.pilots).length == this.team_size*2) {
+      if (this.phase == 0) {
         this.phase = 1;
         this.phaseStartTime = Date.now();
       }
       if (this.phase >= 1){
         let time = Date.now();
         if (time - this.phaseStartTime > this.round_time*1000){
-          this.phase += 1;
-          this.phaseStartTime = Date.now();
+          this.stepPhase();
         }
-        this.timer = this.round_time - (time - this.phaseStartTime);
-      }
-      
+        this.timer = this.round_time - (time - this.phaseStartTime)/1000;
+      } 
+    }
+
+    stepPhase(){
+      this.phase += 1;
+      this.phaseStartTime = Date.now();
+      this.timer = this.round_time;
     }
 
 
@@ -143,26 +150,38 @@ class Lobby {
       return user_token;
     }
 
-    isLocked(role){
-      let timelineStr = `T${role%2==0 ? "1" : "2"}S${(role - (role%2)) / 2 + 1} ship-gun-pick`;
-      let lockPhase = this.timeline.indexOf(timelineStr);
-      return this.phase > lockPhase;
+    // isLocked(role){
+    //   let timelineStr = `T${role%2==0 ? "1" : "2"}S${(role - (role%2)) / 2 + 1} ship-gun-pick`;
+    //   let lockPhase = this.timeline.indexOf(timelineStr);
+    //   return this.phase > lockPhase;
+    // }
+
+    timelineCheck(role, command, target_phase){
+      // 0 is current phase
+      // >0 is future phase
+      // <0 is past phase
+      let timelineStr = `T${role%2==0 ? "1" : "2"}S${(role - (role%2)) / 2 + 1} ${command}`;
+      if (this.timeline[target_phase] != timelineStr) return -1;
+
+      // let targetPhase = this.timeline.indexOf(timelineStr);
+      return target_phase - this.phase;
     }
 
-    isGunBanning(role){
 
-    }
 
-    isShipBanning(role){
-
-    }
-
-    updateLoadout(loadout, user_token){
+    updateLoadout(loadout, user_token, target_phase){
       let shipIdx = this.members[user_token].role;
       if (shipIdx < 0) return;
-      if (this.isLocked(shipIdx)) return;
-
+      // if (this.isLocked(shipIdx)) return;
+      if (this.timelineCheck(shipIdx, 'ship-gun-pick', target_phase) < 0) return;
       this.ships[shipIdx] = [loadout[0], loadout[1]];
+    }
+
+    lockLoadout(user_token, target_phase){
+      let shipIdx = this.members[user_token].role;
+      if (shipIdx < 0) return;
+      if (this.timelineCheck(shipIdx, 'ship-gun-pick', target_phase) != 0) return;
+      this.stepPhase();
     }
 
     getNameList(){
@@ -185,7 +204,7 @@ class Lobby {
 
     lobbyState(){
         return {
-          "timer": this.timer,
+          "timer": Math.floor(this.timer),
           "phase": this.phase,
           "ships": this.getShipList(),
           "ship_bans": [0, 1],
@@ -334,14 +353,10 @@ httpServer.listen(80);
 
 app.post('/loadout_change', function(req, res){
   try {
-    assert('lobby_id' in req.body);
-    assert('user_token' in req.body);
-    assert('loadout' in req.body);
+    verifyLobbyRequest(req.body);
 
-    assert(req.body.lobby_id in lobbies);
-    assert(req.body.user_token in lobbies[req.body.lobby_id].members);
+    assert('loadout' in req.body);
     assert(Array.isArray(req.body.loadout));
-    
     assert(Number.isInteger(req.body.loadout[0]));
     assert(Array.isArray(req.body.loadout[1]));
     for (let i=0; i<req.body.loadout[1].length; i++){
@@ -353,18 +368,22 @@ app.post('/loadout_change', function(req, res){
     return;
   }
 
-  lobbies[req.body.lobby_id].updateLoadout(req.body.loadout, req.body.user_token);
+  lobbies[req.body.lobby_id].updateLoadout(req.body.loadout, req.body.user_token, req.body.target_phase);
 
   res.status(200).send("Loadout updated");
 });
 
-app.post('/lock_ship', function(req, res){
+app.post('/lock_loadout', function(req, res){
   try{
     verifyLobbyRequest(req.body);
   }
   catch{
     res.status(400).send();
   }
+
+  lobbies[req.body.lobby_id].lockLoadout(req.body.user_token, req.body.target_phase);
+
+  res.status(200).send("Loadout locked.");
 });
 
 app.post('/ban_ship', function(req, res){

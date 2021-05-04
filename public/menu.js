@@ -4,8 +4,8 @@ var test_ruleset = {
   "timeline": [
           "Waiting for pilots to join",
           "Waiting for lobby start",
-          "T2S1 ship-ban", 
-          "T1S1 ship-ban", 
+          // "T2S1 ship-ban", 
+          // "T1S1 ship-ban", 
           "T1S1 ship-gun-pick", 
           "T2S1 ship-gun-pick",
           "T2S2 gun-ban",
@@ -13,7 +13,7 @@ var test_ruleset = {
           "T1S2 ship-gun-pick", 
           "T2S2 ship-gun-pick"
         ],
-  "password": "123",
+  "password": "",
   "moderated": false
 };
 

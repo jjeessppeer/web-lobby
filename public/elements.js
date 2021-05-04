@@ -22,8 +22,13 @@ class LobbyShipItem extends HTMLDivElement {
     this.shipDropdown = document.createElement('div', { is: 'item-dropdown' });
 
     this.shipDropdown.addEventListener('item-selected', event => this.setShip(event.target.img.dataset.item_id));
-
     this.shipDropdown.addEventListener('item-selected', event => {postLoadout(this.getLoadoutArray())});
+
+    this.querySelector('button').addEventListener('click', event => {
+      lockLoadout();
+    });
+
+
 
     this.shipDropdown.setContent(ships);
 
@@ -141,7 +146,6 @@ class ItemDropdown extends HTMLDivElement {
   }
 
   selectItem(title, src, item_id) {
-    console.log(item_id)
     this.img.title = title;
     this.img.src = src;
     this.img.dataset.item_id = item_id;
