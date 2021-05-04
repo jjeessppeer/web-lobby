@@ -226,13 +226,20 @@ class Lobby {
           this.timelineCheck(shipIdx, 'gun-ban', target_phase) != 0) return;
       this.stepPhase();
     }
+    skipBan(user_token, target_phase){
+      let shipIdx = this.members[user_token].role;
+      if (shipIdx < 0) return;
 
-    skipGunBan(user_token, target_phase){
+      let isGunBan = this.timelineCheck(shipIdx, 'gun-ban', target_phase) == 0;
+      let isShipBan = this.timelineCheck(shipIdx, 'ship-ban', target_phase) == 0;
+      if (!isGunBan && !isShipBan) return;
 
-    }
-
-    skipShipBan(user_token, target_phase){
-
+      let command = isGunBan ? 'gun-ban' : 'ship-ban';
+      let banIdx = this.commandCount(command, target_phase);
+      if (isGunBan) this.gun_bans[banIdx] = -1;
+      else this.ship_bans[banIdx] = -1;
+      
+      this.stepPhase();
     }
 
 
@@ -478,5 +485,15 @@ app.post('/lock_ban', function(req, res){
   }
   // lobbies[req.body.lobby_id].updateGunBan(req.body.user_token, req.body.target_phase, req.body.gun);
   lobbies[req.body.lobby_id].lockBan(req.body.user_token, req.body.target_phase);
-
 });
+
+app.post('/skip_ban', function(req, res){
+  try{
+    verifyLobbyRequest(req.body);
+  }
+  catch{
+    res.status(400).send();
+    return;
+  }
+  lobbies[req.body.lobby_id].skipBan(req.body.user_token, req.body.target_phase);
+})

@@ -148,16 +148,22 @@ function updateLobbyState(lobbyStateData, ruleset) {
         lobby_ships[shipIdx].setInteractive(false);
       }
       if (command == "ship-ban"){
-        let img = document.createElement('img');
-        img.src = ships[lobbyStateData.ship_bans[shipBanIdx++]].img;
-        img.classList.add(shipIdx % 2 != 0 ? "blue" : "red");
-        document.getElementById('shipBans').appendChild(img);
+        let shipBan = lobbyStateData.ship_bans[shipBanIdx++];
+        if (shipBan != -1){
+          let img = document.createElement('img');
+          img.src = ships[shipBan].img;
+          img.classList.add(shipIdx % 2 != 0 ? "blue" : "red");
+          document.getElementById('shipBans').appendChild(img);
+        }
       }
       if (command == "gun-ban"){
-        let img = document.createElement('img');
-        img.src = light_guns[lobbyStateData.gun_bans[gunBanIdx++]].img;
-        img.classList.add(shipIdx % 2 != 0 ? "blue" : "red");
-        document.getElementById('gunBans').appendChild(img);
+        let gunBan = lobbyStateData.gun_bans[gunBanIdx++];
+        if (gunBan != -1){
+          let img = document.createElement('img');
+          img.src = light_guns[gunBan].img;
+          img.classList.add(shipIdx % 2 != 0 ? "blue" : "red");
+          document.getElementById('gunBans').appendChild(img);
+        }
       }
     }
     if (lobbyStateData.phase == i && shipIdx != -1){
@@ -190,18 +196,6 @@ function updateLobbyState(lobbyStateData, ruleset) {
       else{
         document.getElementById('shipBanElem').style.display = "none";
       }
-      // if (command == "ship-ban"){
-      //   lobby_ships[shipIdx].setStatus('BANNING SHIP');
-      //   let banElem = document.createElement('div', { is: 'lobby-ban-element' });
-      //   banElem.setBanType('ship');
-      //   banElem.setInteractive(shipIdx == user_role);
-        
-      //   // TODO: only update selection if not my ship
-      //   let idx = lobbyStateData.ship_bans[shipBanIdx++];
-      //   banElem.dropdown.selectItem(ships[idx].name, ships[idx].img, idx);
-      //   document.getElementById('lobbyBanDiv').append(banElem);
-
-      // }
     }
 
     // Update displayed timeline
@@ -260,4 +254,9 @@ function postShipBan(ship){
 
 function postBanLock(){
   httpxPostRequest("/lock_ban", { "lobby_id": current_lobby_id, "user_token": user_token, "target_phase": current_phase}, (response, status) => {});
+}
+
+function postBanSkip(){
+  httpxPostRequest("/skip_ban", { "lobby_id": current_lobby_id, "user_token": user_token, "target_phase": current_phase}, (response, status) => {});
+
 }

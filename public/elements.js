@@ -188,6 +188,10 @@ class BanElement extends HTMLDivElement {
     this.banBtn.addEventListener('click', event => {
       postBanLock();
     });
+    this.skipBtn.addEventListener('click', event => {
+      postBanSkip();
+    });
+
 
   
   }
