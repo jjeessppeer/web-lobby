@@ -185,6 +185,10 @@ class BanElement extends HTMLDivElement {
         postShipBan(item_id);
     });
 
+    this.banBtn.addEventListener('click', event => {
+      postBanLock();
+    });
+
   
   }
 

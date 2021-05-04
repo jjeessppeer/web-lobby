@@ -1,36 +1,3 @@
-// var lobby_init_data = {
-//   "ruleset": {
-//     "round_time": 30,
-//     "team_size": 2,
-//     "timeline": [
-//       "Waiting for lobby start",
-//       "T2S1 ship-ban", 
-//       "T1S1 ship-ban", 
-//       "T1S1 ship-gun-pick", 
-//       "T2S1 ship-gun-pick",
-//       "T2S2 gun-ban",
-//       "T1S2 gun-ban",
-//       "T1S2 ship-gun-pick", 
-//       "T2S2 ship-gun-pick"]
-//   },
-//   "names": ["name1", "name2", "name3", "name4"]
-// }
-
-// var lobby_state = {
-//   "timer": 25,
-//   "phase": 6,
-//   "ships": [
-//     [0, [0, 1, 2, 3]],
-//     [1, [4, 3, 2, 1, 0]],
-//     [1, [0, 1, 2, 3, 4]],
-//     [0, [3, 2, 1, 0]],
-//   ],
-//   "ship_bans": [0, 1],
-//   "gun_bans": [4, 1]
-// }
-
-// var user_token = "123";
-// var user_role = { "role": "pilot", "ship": 2 };
 
 var lobby_ships = [];
 var lobby_phases = [];
@@ -279,16 +246,18 @@ function lockLoadout(){
 
 function postGunBan(gun){
   console.log("Posting gun ban " + gun);
-  // TODO: support for multiple ban rounds per pilot
-  let timelineStr = `T${user_role%2==0 ? "1" : "2"}S${(user_role - (user_role%2)) / 2 + 1} gun-ban`;
-  let target_phase = active_ruleset.timeline.indexOf(timelineStr);
-  httpxPostRequest("/ban_gun", { "lobby_id": current_lobby_id, "user_token": user_token, "target_phase": target_phase, "gun": gun}, (response, status) => {});
+  // let timelineStr = `T${user_role%2==0 ? "1" : "2"}S${(user_role - (user_role%2)) / 2 + 1} gun-ban`;
+  // let target_phase = active_ruleset.timeline.indexOf(timelineStr);
+  httpxPostRequest("/ban_gun", { "lobby_id": current_lobby_id, "user_token": user_token, "target_phase": current_phase, "gun": gun}, (response, status) => {});
 }
 
 function postShipBan(ship){
   console.log("Posting ship ban " + ship);
-  // TODO: support for multiple ban rounds per pilot
-  let timelineStr = `T${user_role%2==0 ? "1" : "2"}S${(user_role - (user_role%2)) / 2 + 1} ship-ban`;
-  let target_phase = active_ruleset.timeline.indexOf(timelineStr);
-  httpxPostRequest("/ban_ship", { "lobby_id": current_lobby_id, "user_token": user_token, "target_phase": target_phase, "ship": ship}, (response, status) => {});
+  // let timelineStr = `T${user_role%2==0 ? "1" : "2"}S${(user_role - (user_role%2)) / 2 + 1} ship-ban`;
+  // let target_phase = active_ruleset.timeline.indexOf(timelineStr);
+  httpxPostRequest("/ban_ship", { "lobby_id": current_lobby_id, "user_token": user_token, "target_phase": current_phase, "ship": ship}, (response, status) => {});
+}
+
+function postBanLock(){
+  httpxPostRequest("/lock_ban", { "lobby_id": current_lobby_id, "user_token": user_token, "target_phase": current_phase}, (response, status) => {});
 }

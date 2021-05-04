@@ -1,11 +1,14 @@
 var test_ruleset = {
-  "round_time": 5,
+  "round_time": 10,
   "team_size": 2,
   "timeline": [
           "Waiting for pilots to join",
           // "Waiting for lobby start",
-          "T1S1 ship-ban", 
-          "T2S1 ship-ban", 
+          "T1S1 gun-ban",
+          "T1S1 ship-ban",
+          "T1S1 gun-ban",
+          "T1S1 ship-ban",
+          "T1S1 gun-ban",
           "T1S1 gun-ban",
           "T2S1 gun-ban",
           "T1S1 ship-gun-pick", 

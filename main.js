@@ -219,10 +219,19 @@ class Lobby {
       this.ship_bans[banIdx] = ship;
     }
 
-    lockGunBan(user_token, target_phase){
+    lockBan(user_token, target_phase){
+      let shipIdx = this.members[user_token].role;
+      if (shipIdx < 0) return;
+      if (this.timelineCheck(shipIdx, 'ship-ban', target_phase) != 0 && 
+          this.timelineCheck(shipIdx, 'gun-ban', target_phase) != 0) return;
+      this.stepPhase();
+    }
+
+    skipGunBan(user_token, target_phase){
 
     }
-    skipGunBan(user_token, target_phase){
+
+    skipShipBan(user_token, target_phase){
 
     }
 
@@ -432,15 +441,15 @@ app.post('/lock_loadout', function(req, res){
 });
 
 app.post('/ban_ship', function(req, res){
-  // try{
+  try{
     verifyLobbyRequest(req.body);
     assert('ship' in req.body);
     assert(Number.isInteger(req.body.ship));
-  // }
-  // catch{
-  //   res.status(400).send();
-  //   return;
-  // }
+  }
+  catch{
+    res.status(400).send();
+    return;
+  }
   lobbies[req.body.lobby_id].updateShipBan(req.body.user_token, req.body.target_phase, req.body.ship);
   res.status(200).send("Gun ban updated");
 });
@@ -457,4 +466,17 @@ app.post('/ban_gun', function(req, res){
   }
   lobbies[req.body.lobby_id].updateGunBan(req.body.user_token, req.body.target_phase, req.body.gun);
   res.status(200).send("Gun ban updated");
+});
+
+app.post('/lock_ban', function(req, res){
+  try{
+    verifyLobbyRequest(req.body);
+  }
+  catch{
+    res.status(400).send();
+    return;
+  }
+  // lobbies[req.body.lobby_id].updateGunBan(req.body.user_token, req.body.target_phase, req.body.gun);
+  lobbies[req.body.lobby_id].lockBan(req.body.user_token, req.body.target_phase);
+
 });
