@@ -10,10 +10,10 @@ var requestIp = require('request-ip');
 const assert = require('assert');
 
 const logOpts = {
-  fileNamePattern:'log-<DATE>.log',
-  logDirectory:'logs',
-  timestampFormat:'YYYY-MM-DD HH:mm:ss.SSS',
-  dateFormat:'YYYY.MM.DD'
+  fileNamePattern: 'log-<DATE>.log',
+  logDirectory: 'logs',
+  timestampFormat: 'YYYY-MM-DD HH:mm:ss.SSS',
+  dateFormat: 'YYYY.MM.DD'
 }
 const log = require('simple-node-logger').createRollingFileLogger(logOpts);
 var app = express()
@@ -40,17 +40,17 @@ var app = express()
 // };
 
 
-function closeLobby(lobby_id, interval_id){
+function closeLobby(lobby_id, interval_id) {
   clearInterval(interval_id);
   delete lobbies[lobby_id];
 }
 
-function cleanLobbies(){
+function cleanLobbies() {
   // remove old unused lobbies.
   // console.log("Cleaning up lobbies.");
 }
 
-function verifyLobbyRequest(body){
+function verifyLobbyRequest(body) {
   assert('lobby_id' in body);
   assert('user_token' in body);
   assert('target_phase' in body);
@@ -63,293 +63,382 @@ setInterval(cleanLobbies, 1000);
 
 
 class Lobby {
-    constructor(timeline, round_time, team_size, password, moderated=false){
-        this.timeline = timeline;
-        this.round_time = round_time;
-        this.team_size = team_size;
-        this.password = password;
+  constructor(timeline, round_time, team_size, password, moderated = false) {
+    this.timeline = timeline;
+    this.round_time = round_time;
+    this.team_size = team_size;
+    this.password = password;
 
-        this.ruleset = {
-          "round_time": round_time,
-          "team_size": team_size,
-          "timeline": timeline,
-          "password": password,
-          "moderated": moderated
-        };
+    this.ruleset = {
+      "round_time": round_time,
+      "team_size": team_size,
+      "timeline": timeline,
+      "password": password,
+      "moderated": moderated
+    };
 
-        this.phase = 0;
-        this.paused = true;
-        this.lastUsed = Date.now();
-        this.phaseStartTime = Date.now();
-        this.timer = this.round_time;
+    this.phase = 0;
+    this.paused = true;
+    this.lastUsed = Date.now();
+    this.phaseStartTime = Date.now();
+    this.timer = this.round_time;
 
-        do {
-          this.lobby_id = crypto.randomBytes(4).toString('hex');
-        } while (this.lobby_id in lobbies);
+    do {
+      this.lobby_id = crypto.randomBytes(4).toString('hex');
+    } while (this.lobby_id in lobbies);
 
-        console.log(`creating lobby ${this.lobby_id}`)
+    console.log(`creating lobby ${this.lobby_id}`)
 
-        this.members = {};
-        this.pilots = {};
-        this.ships = {};
-        // for (let i=0; i<this.team_size; i++){
-        //   this.ships.push([0, [0, 0, 0, 0]]);
-        // }
+    this.members = {};
+    this.pilots = {};
+    this.ships = {};
+    // for (let i=0; i<this.team_size; i++){
+    //   this.ships.push([0, [0, 0, 0, 0]]);
+    // }
 
-        this.gun_bans = [];
-        this.ship_bans = [];
+    this.gun_bans = [];
+    this.ship_bans = [];
 
-        for (let i=0; i<this.commandCount('gun-ban', this.timeline.length); i++){
-          this.gun_bans.push(0);
-        }
-        for (let i=0; i<this.commandCount('ship-ban', this.timeline.length); i++){
-          this.ship_bans.push(0);
-        }
+    this.gun_ban_previews = [];
+    this.ship_ban_previews = [];
 
-        this.intervalId = setInterval(() => this.update(), 1000);
+    for (let i = 0; i < this.commandCount('gun-ban', this.timeline.length); i++) {
+      // this.gun_bans.push(0);
+      this.gun_ban_previews.push(0);
+    }
+    for (let i = 0; i < this.commandCount('ship-ban', this.timeline.length); i++) {
+      // this.ship_bans.push(0);
+      this.ship_ban_previews.push(0);
     }
 
-    update(){
-      // if (this.phase == 0 && Object.keys(this.pilots).length == this.team_size*2) {
-      if (this.phase == 0) {
-        this.phase = 1;
-        this.phaseStartTime = Date.now();
-      }
-      if (this.phase >= 1){
-        let time = Date.now();
-        if (time - this.phaseStartTime > this.round_time*1000){
-          this.stepPhase();
-        }
-        this.timer = this.round_time - (time - this.phaseStartTime)/1000;
-      }
+    this.intervalId = setInterval(() => this.update(), 1000);
+  }
 
-      // Make sure builds are valid.
-      for (let i=0; i<2*this.team_size; i++){
-        if (!(i in this.ships)) continue;
-        
-        // Only check non locked ships.
-        if (this.timelineCheck(i, 'ship-gun-pick') < 0) continue;
-
-        // Fix loadout if not valid.
-        if (!this.loadoutAllowed(this.ships[i][0], this.ships[i][1])){
-          console.log("fixing loadout");
-          this.ships[i] = this.legalizeLoadout(this.ships[i][0], this.ships[i][1]);
-        }
-      }
-      // return ships;
-
-    }
-
-    stepPhase(){
-      this.phase += 1;
+  update() {
+    // if (this.phase == 0 && Object.keys(this.pilots).length == this.team_size*2) {
+    if (this.phase == 0) {
+      this.phase = 1;
       this.phaseStartTime = Date.now();
-      this.timer = this.round_time;
+    }
+    if (this.phase >= 1) {
+      let time = Date.now();
+      if (time - this.phaseStartTime > this.round_time * 1000) {
+        // Phase timed out.
+        let activeCommand = this.getActiveCommand();
+        // Check if ban timed out.
+        if (activeCommand == 'gun-ban') {
+          this.gun_bans.push(-1);
+        }
+        if (activeCommand == 'ship-ban') {
+          this.ship_bans.push(-1);
+        }
+
+        this.stepPhase();
+      }
+      this.timer = this.round_time - (time - this.phaseStartTime) / 1000;
     }
 
+    // Make sure builds are valid.
+    for (let i = 0; i < 2 * this.team_size; i++) {
+      if (!(i in this.ships)) continue;
 
+      // Only check non locked ships.
+      if (this.timelineCheck(i, 'ship-gun-pick') < 0) continue;
 
-    addMember(role, name){
-      let user_token;
-      do {
-        user_token = crypto.randomBytes(4).toString('hex');
-      } while (user_token in this.members);
-
-      // Roles
-      // >= 0 pilot
-      // -1 t1 crew
-      // -2 t2 crew
-      // -3 spectator
-      // -4 moderator
-      // Check if role is taken.
-      if (role >= 0){
-        for (const [token, member] of Object.entries(this.members)) {
-          if (member.role == role) return false;
-        }
+      // Fix loadout if not valid.
+      if (!this.loadoutAllowed(this.ships[i][0], this.ships[i][1])) {
+        console.log("fixing loadout");
+        this.ships[i] = this.legalizeLoadout(this.ships[i][0], this.ships[i][1]);
       }
-      
-      this.members[user_token] = {
-        "token": user_token,
-        "role": role,
-        "name": name
-      };
-      if (role >= 0){
-        this.pilots[role] = this.members[user_token];
-        this.ships[role] = [1, [1, 1, 1, 1, 1]];
-      }
+    }
+    // return ships;
 
-      return user_token;
+  }
+
+  stepPhase() {
+    this.phase += 1;
+    this.phaseStartTime = Date.now();
+    this.timer = this.round_time;
+  }
+
+  getActiveCommand() {
+    if (this.phase >= this.timeline.length) return 'ended';
+    let args = this.timeline[this.phase].split(' ');
+    if (args.length == 1) return args[0];
+    if (args.length == 2) return args[1];
+    return this.timeline[this.phase];
+  }
+
+
+
+  addMember(role, name) {
+    let user_token;
+    do {
+      user_token = crypto.randomBytes(4).toString('hex');
+    } while (user_token in this.members);
+
+    // Roles
+    // >= 0 pilot
+    // -1 t2 crew
+    // -2 t1 crew
+    // -3 spectator
+    // -4 moderator
+    // Check if role is taken.
+    if (role >= 0) {
+      for (const [token, member] of Object.entries(this.members)) {
+        if (member.role == role) return false;
+      }
     }
 
-    timelineCheck(role, command, target_phase){
-      // 0 is current phase
-      // >0 is future phase
-      // <0 is past phase
-      let timelineStr = `T${role%2==0 ? "1" : "2"}S${(role - (role%2)) / 2 + 1} ${command}`;
-
-      if (target_phase == undefined) target_phase = this.timeline.indexOf(timelineStr);
-      if (this.timeline[target_phase] != timelineStr) return -1;
-
-      // let targetPhase = this.timeline.indexOf(timelineStr);
-      return target_phase - this.phase;
+    this.members[user_token] = {
+      "token": user_token,
+      "role": role,
+      "name": name
+    };
+    if (role >= 0) {
+      this.pilots[role] = this.members[user_token];
+      this.ships[role] = this.legalizeLoadout(1, [1, 1, 1, 1, 1]);
     }
 
-    commandCount(query_command, target_phase){
-      // Return the number of times the command occurs in the timeline before phase.
-      let endIdx = Math.min(target_phase, this.timeline.length);
-      let count = 0;
-      for (let i=0; i<endIdx; i++){
-        let [target, command] = this.timeline[i].split(' ');
-        if (command == query_command) count++;
+    return user_token;
+  }
+
+  timelineCheck(role, command, target_phase) {
+    // 0 is current phase
+    // >0 is future phase
+    // <0 is past phase
+    let timelineStr = `T${role % 2 == 0 ? "1" : "2"}S${(role - (role % 2)) / 2 + 1} ${command}`;
+
+    if (target_phase == undefined) target_phase = this.timeline.indexOf(timelineStr);
+    if (this.timeline[target_phase] != timelineStr) return -1;
+
+    // let targetPhase = this.timeline.indexOf(timelineStr);
+    return target_phase - this.phase;
+  }
+
+  commandCount(query_command, target_phase) {
+    // Return the number of times the command occurs in the timeline before phase.
+    let endIdx = Math.min(target_phase, this.timeline.length);
+    let count = 0;
+    for (let i = 0; i < endIdx; i++) {
+      let [target, command] = this.timeline[i].split(' ');
+      if (command == undefined) command = target;
+      if (command == query_command) count++;
+    }
+    return count;
+  }
+
+  loadoutAllowed(ship, guns) {
+    let shipbanCount = this.commandCount('ship-ban', this.phase);
+    let gunbanCount = this.commandCount('gun-ban', this.phase);
+    let ship_bans = this.ship_bans.slice(0, shipbanCount);
+    let gun_bans = this.gun_bans.slice(0, gunbanCount);
+    if (ship_bans.includes(ship)) return false;
+    for (let i = 0; i < guns.length; i++) {
+      if (gun_bans.includes(guns[i])) return false;
+      // TODO: check valid gun index
+    }
+    return true;
+  }
+
+  legalizeLoadout(ship, guns) {
+    console.log(JSON.stringify(this.gun_bans));
+    console.log(JSON.stringify(this.ship_bans));
+    console.log("ori: " + JSON.stringify([ship, guns]));
+
+    let shipbanCount = this.commandCount('ship-ban', this.phase);
+    let gunbanCount = this.commandCount('gun-ban', this.phase);
+    let ship_bans = this.ship_bans.slice(0, shipbanCount);
+    let gun_bans = this.gun_bans.slice(0, gunbanCount);
+
+    // fix ship
+    let first_allowed_light_gun = -1;
+    let first_allowed_heavy_gun = -1;
+    let first_allowed_ship = -1;
+
+    for (const [key, value] of Object.entries(gameData.guns)) {
+      if (!gun_bans.includes(key)) {
+        first_allowed_light_gun = key;
+        break;
       }
-      return count;
+    }
+    for (const [key, value] of Object.entries(gameData.ships)) {
+      if (!ship_bans.includes(key)) {
+        first_allowed_ship = key;
+        break;
+      }
     }
 
-    loadoutAllowed(ship, guns){
-      let shipbanCount = this.commandCount('ship-ban', this.phase);
-      let gunbanCount = this.commandCount('gun-ban', this.phase);
-      let ship_bans = this.ship_bans.slice(0, shipbanCount);
-      let gun_bans = this.gun_bans.slice(0, gunbanCount);
-      if (ship_bans.includes(ship)) return false;
-      for (let i=0; i<guns.length; i++){
-        if (gun_bans.includes(guns[i])) return false;
+    // Ship is banned
+    if (ship_bans.includes(ship)) {
+      ship = first_allowed_ship;
+      guns = [];
+      for (let i = 0; i < gameData.ships[ship].guns.length; i++) {
+        guns.push(first_allowed_light_gun);
       }
-      return true;
-    }
-
-    legalizeLoadout(ship, guns){
-      console.log(JSON.stringify(this.gun_bans));
-      console.log(JSON.stringify(this.ship_bans));
-      console.log("ori: " + JSON.stringify([ship, guns]));
-
-      let shipbanCount = this.commandCount('ship-ban', this.phase);
-      let gunbanCount = this.commandCount('gun-ban', this.phase);
-      let ship_bans = this.ship_bans.slice(0, shipbanCount);
-      let gun_bans = this.gun_bans.slice(0, gunbanCount);
-
-      // fix ship
-      let first_allowed_light_gun = -1;
-      let first_allowed_heavy_gun = -1;
-      let first_allowed_ship = -1;
-
-      for (let i=0; i<gameData.guns.length; i++){
-        if (!gun_bans.includes(i)){
-          first_allowed_light_gun = i;
-          break;
-        }
-      }
-      for (let i=0; i<gameData.ships.length; i++){
-        if (!ship_bans.includes(i)){
-          first_allowed_ship = i;
-          break;
-        }
-      }
-
-      // Ship is banned
-      if (ship_bans.includes(ship)) {
-        ship = first_allowed_ship;
-        guns = [];
-        for (let i=0; i<gameData.ships[ship].guns.length; i++) {
-          guns.push(first_allowed_light_gun);
-        }
-        return [ship, guns];
-      }
-
-      // Fix banned guns
-      for (let i=0; i<guns.length; i++){
-        // Banned gun
-        if (gun_bans.includes(guns[i])){
-          guns[i] = first_allowed_light_gun;
-        }
-      }
-      console.log("fix: " + JSON.stringify([ship, guns]));
       return [ship, guns];
     }
 
-    updateLoadout(loadout, user_token, target_phase){
-      let shipIdx = this.members[user_token].role;
-      if (shipIdx < 0) return;
-      // if (this.isLocked(shipIdx)) return;
-      if (this.timelineCheck(shipIdx, 'ship-gun-pick', target_phase) < 0) return;
-      if (!this.loadoutAllowed(loadout[0], loadout[1])) return;
-      this.ships[shipIdx] = [loadout[0], loadout[1]];
-    }
-
-    lockLoadout(user_token, target_phase){
-      let shipIdx = this.members[user_token].role;
-      if (shipIdx < 0) return;
-      if (this.timelineCheck(shipIdx, 'ship-gun-pick', target_phase) != 0) return;
-      this.stepPhase();
-    }
-
-    updateGunBan(user_token, target_phase, gun){
-      let shipIdx = this.members[user_token].role;
-      if (shipIdx < 0) return;
-      if (this.timelineCheck(shipIdx, 'gun-ban', target_phase) != 0) return;
-      let banIdx = this.commandCount('gun-ban', target_phase);
-      this.gun_bans[banIdx] = gun;
-    }
-
-    updateShipBan(user_token, target_phase, ship){
-      let shipIdx = this.members[user_token].role;
-      if (shipIdx < 0) return;
-      if (this.timelineCheck(shipIdx, 'ship-ban', target_phase) != 0) return;
-      let banIdx = this.commandCount('ship-ban', target_phase);
-      this.ship_bans[banIdx] = ship;
-    }
-
-    lockBan(user_token, target_phase){
-      let shipIdx = this.members[user_token].role;
-      if (shipIdx < 0) return;
-      if (this.timelineCheck(shipIdx, 'ship-ban', target_phase) != 0 && 
-          this.timelineCheck(shipIdx, 'gun-ban', target_phase) != 0) return;
-      this.stepPhase();
-    }
-    skipBan(user_token, target_phase){
-      let shipIdx = this.members[user_token].role;
-      if (shipIdx < 0) return;
-
-      let isGunBan = this.timelineCheck(shipIdx, 'gun-ban', target_phase) == 0;
-      let isShipBan = this.timelineCheck(shipIdx, 'ship-ban', target_phase) == 0;
-      if (!isGunBan && !isShipBan) return;
-
-      let command = isGunBan ? 'gun-ban' : 'ship-ban';
-      let banIdx = this.commandCount(command, target_phase);
-      if (isGunBan) this.gun_bans[banIdx] = -1;
-      else this.ship_bans[banIdx] = -1;
-      
-      this.stepPhase();
-    }
-
-
-
-    getNameList(){
-      let names = [];
-      for (let i=0; i<2*this.team_size; i++){
-        if (i in this.pilots) names.push(this.pilots[i].name);
-        else names.push("NOT JOINED"); 
+    // Fix banned guns
+    for (let i = 0; i < guns.length; i++) {
+      // Banned gun
+      if (gun_bans.includes(guns[i])) {
+        guns[i] = first_allowed_light_gun;
       }
-      return names;
     }
+    console.log("fix: " + JSON.stringify([ship, guns]));
+    return [ship, guns];
+  }
 
-    getShipList(){
-      let ships = [];
-      for (let i=0; i<2*this.team_size; i++){
+  updateLoadout(loadout, user_token, target_phase) {
+    let shipIdx = this.members[user_token].role;
+    if (shipIdx < 0) return;
+    // if (this.isLocked(shipIdx)) return;
+    if (this.timelineCheck(shipIdx, 'ship-gun-pick', target_phase) < 0) return;
+    if (!this.loadoutAllowed(loadout[0], loadout[1])) return;
+    this.ships[shipIdx] = [loadout[0], loadout[1]];
+  }
+
+  lockLoadout(user_token, target_phase) {
+    let shipIdx = this.members[user_token].role;
+    if (shipIdx < 0) return;
+    if (this.timelineCheck(shipIdx, 'ship-gun-pick', target_phase) != 0) return;
+    this.stepPhase();
+  }
+
+  updateGunBan(user_token, target_phase, gun) {
+    let shipIdx = this.members[user_token].role;
+    if (shipIdx < 0) return;
+    if (this.timelineCheck(shipIdx, 'gun-ban', target_phase) != 0) return;
+    if (gun == 0) return;
+    let banIdx = this.commandCount('gun-ban', target_phase);
+    this.gun_ban_previews[banIdx] = gun;
+  }
+
+  updateShipBan(user_token, target_phase, ship) {
+    let shipIdx = this.members[user_token].role;
+    if (shipIdx < 0) return;
+    if (this.timelineCheck(shipIdx, 'ship-ban', target_phase) != 0) return;
+    if (ship == 0) return;
+    let banIdx = this.commandCount('ship-ban', target_phase);
+    this.ship_ban_previews[banIdx] = ship;
+  }
+
+  lockBan(user_token, target_phase) {
+    let shipIdx = this.members[user_token].role;
+    if (shipIdx < 0) return;
+
+    let isShipBan = this.timelineCheck(shipIdx, 'ship-ban', target_phase) == 0;
+    let isGunBan = this.timelineCheck(shipIdx, 'gun-ban', target_phase) == 0;
+    if (!isShipBan && !isGunBan) return;
+
+    if (isShipBan) {
+      let banIdx = this.commandCount('ship-ban', target_phase);
+      this.ship_bans.push(this.ship_ban_previews[banIdx]);
+    }
+    if (isGunBan) {
+      let banIdx = this.commandCount('gun-ban', target_phase);
+      this.gun_bans.push(this.gun_ban_previews[banIdx]);
+    }
+    this.stepPhase();
+  }
+  skipBan(user_token, target_phase) {
+    let shipIdx = this.members[user_token].role;
+    if (shipIdx < 0) return;
+
+    let isGunBan = this.timelineCheck(shipIdx, 'gun-ban', target_phase) == 0;
+    let isShipBan = this.timelineCheck(shipIdx, 'ship-ban', target_phase) == 0;
+    if (!isGunBan && !isShipBan) return;
+
+    let command = isGunBan ? 'gun-ban' : 'ship-ban';
+    let banIdx = this.commandCount(command, target_phase);
+    if (isGunBan) this.gun_bans[banIdx] = -1;
+    else this.ship_bans[banIdx] = -1;
+
+    this.stepPhase();
+  }
+
+
+
+  getNameList() {
+    let names = [];
+    for (let i = 0; i < 2 * this.team_size; i++) {
+      if (i in this.pilots) names.push(this.pilots[i].name);
+      else names.push("NOT JOINED");
+    }
+    return names;
+  }
+
+  getShipList(role) {
+    let ships = [];
+
+    // Spectator or moderator gets full info.
+    if (role == -3 || role == -4){
+      for (let i = 0; i < 2 * this.team_size; i++) {
         if (i in this.ships) ships.push(this.ships[i]);
-        else ships.push([0, [0, 0, 0, 0]]); 
+        else ships.push([0, []]);
       }
       return ships;
     }
 
-    lobbyState(){
-        return {
-          "timer": Math.floor(this.timer),
-          "phase": this.phase,
-          "ships": this.getShipList(),
-          "ship_bans": this.ship_bans,
-          "gun_bans": this.gun_bans,
-          "names": this.getNameList()
-        };
+    let team = Math.abs(role%2);
+
+    // Teams gets team info + locked/picking ships
+    for (let i = 0; i < 2 * this.team_size; i++) {
+      if (i in this.ships){
+        if (i%2 == team){
+          ships.push(this.ships[i]);
+        }
+        else if (this.timelineCheck(i, 'ship-gun-pick') <= 0){
+          ships.push(this.ships[i]);
+        }
+        else {
+          ships.push([0, []]);
+        }
+      }
+      else {
+        ships.push([0, []]);
+      }
     }
+    
+    return ships;
+  }
+
+  getShipBans() {
+    let shipBans = [];
+    let count = 0;
+    for (let i = 0; i < this.ship_bans.length; i++) {
+      shipBans.push(this.ship_bans[i]);
+    }
+    for (let i = this.ship_bans.length; i < this.ship_ban_previews.length; i++) {
+      shipBans.push(this.ship_ban_previews[i]);
+    }
+    return shipBans;
+  }
+  getGunBans() {
+    let shipBans = [];
+    let count = 0;
+    for (let i = 0; i < this.gun_bans.length; i++) {
+      shipBans.push(this.gun_bans[i]);
+    }
+    for (let i = this.gun_bans.length; i < this.gun_ban_previews.length; i++) {
+      shipBans.push(this.gun_ban_previews[i]);
+    }
+    return shipBans;
+  }
+
+  lobbyState(user_token) {
+    let user_role = this.members[user_token].role;
+    //TODO: only send enemy loadout when locked or picking.
+    return {
+      "timer": Math.floor(this.timer),
+      "phase": this.phase,
+      "ships": this.getShipList(user_role),
+      "ship_bans": this.getShipBans(),
+      "gun_bans": this.getGunBans(),
+      "names": this.getNameList()
+    };
+  }
 }
 
 var lobbies = {};
@@ -361,15 +450,15 @@ app.use(express.urlencoded({
 app.use(express.static('public'));
 
 
-app.get('/lobbyb', function(req, res){
+app.get('/lobbyb', function (req, res) {
   let ip = requestIp.getClientIp(req);
   log.info(ip, " ping.");
   res.status(200).sendFile(__dirname + "/public/lobby.html");
-//   res.status(200).send("OK");
+  //   res.status(200).send("OK");
 });
 
-app.post('/create_lobby', function(req, res){
-  try{
+app.post('/create_lobby', function (req, res) {
+  try {
     assert('ruleset' in req.body);
     let ruleset = req.body.ruleset;
     assert('round_time' in ruleset);
@@ -391,7 +480,7 @@ app.post('/create_lobby', function(req, res){
     const allowed_commands = ['ship-ban', 'gun-ban', 'ship-gun-pick', 'pause'];
     const allowed_special_commands = ['pause', 'Waiting for pilots to join', 'Waiting for lobby start', 'moderator-start'];
 
-    for (let i=1; i<ruleset.timeline.length; i++){
+    for (let i = 1; i < ruleset.timeline.length; i++) {
       // if (ruleset.timeline[i] == "Waiting for pilots to join") continue;
       // if (ruleset.timeline[i] == "Waiting for lobby start") continue;
       if (allowed_special_commands.includes(ruleset.timeline[i])) continue;
@@ -403,7 +492,7 @@ app.post('/create_lobby', function(req, res){
       assert(allowed_commands.includes(command));
     }
   }
-  catch{
+  catch {
     res.status(400).send("Invalid lobby creation parameters.");
     return;
   }
@@ -411,21 +500,21 @@ app.post('/create_lobby', function(req, res){
   lobbies[lobby.lobby_id] = lobby;
   console.log("Created lobby " + lobby.lobby_id);
   res.status(200).json({
-      "lobby_id": lobby.lobby_id
+    "lobby_id": lobby.lobby_id
   });
 });
 
-app.post('/join_lobby_1', function(req, res){
+app.post('/join_lobby_1', function (req, res) {
   try {
     assert('lobby_id' in req.body);
     assert('password' in req.body);
   }
-  catch{
+  catch {
     res.status(400).send("Failed to join lobby.");
     return;
   }
   let lobby_id = req.body.lobby_id;
-  if (!(lobby_id in lobbies)){
+  if (!(lobby_id in lobbies)) {
     res.status(400).send('Lobby with ID does not exist.');
     return;
   }
@@ -444,14 +533,14 @@ app.post('/join_lobby_1', function(req, res){
   });
 });
 
-app.post('/join_lobby_2', function(req, res){
+app.post('/join_lobby_2', function (req, res) {
   try {
     assert('lobby_id' in req.body);
     assert('username' in req.body);
     assert('role' in req.body);
     assert(req.body.lobby_id in lobbies);
   }
-  catch{
+  catch {
     res.status(400).send("Failed to join lobby: Bad request.");
     return;
   }
@@ -471,7 +560,7 @@ app.post('/join_lobby_2', function(req, res){
   });
 });
 
-app.post('/lobby_state', function(req, res){
+app.post('/lobby_state', function (req, res) {
   try {
     assert('lobby_id' in req.body);
     assert('user_token' in req.body);
@@ -484,14 +573,14 @@ app.post('/lobby_state', function(req, res){
   }
   let lobby = lobbies[req.body.lobby_id];
 
-  res.status(200).json(lobby.lobbyState());
+  res.status(200).json(lobby.lobbyState(req.body.user_token));
 });
 
 // Start HTTP server
 var httpServer = http.createServer(app);
 httpServer.listen(80);
 
-app.post('/loadout_change', function(req, res){
+app.post('/loadout_change', function (req, res) {
   try {
     verifyLobbyRequest(req.body);
 
@@ -499,7 +588,7 @@ app.post('/loadout_change', function(req, res){
     assert(Array.isArray(req.body.loadout));
     assert(Number.isInteger(req.body.loadout[0]));
     assert(Array.isArray(req.body.loadout[1]));
-    for (let i=0; i<req.body.loadout[1].length; i++){
+    for (let i = 0; i < req.body.loadout[1].length; i++) {
       assert(Number.isInteger(req.body.loadout[1][i]));
     }
   }
@@ -513,11 +602,11 @@ app.post('/loadout_change', function(req, res){
   res.status(200).send("Loadout updated");
 });
 
-app.post('/lock_loadout', function(req, res){
-  try{
+app.post('/lock_loadout', function (req, res) {
+  try {
     verifyLobbyRequest(req.body);
   }
-  catch{
+  catch {
     res.status(400).send();
     return;
   }
@@ -527,13 +616,13 @@ app.post('/lock_loadout', function(req, res){
   res.status(200).send("Loadout locked.");
 });
 
-app.post('/ban_ship', function(req, res){
-  try{
+app.post('/ban_ship', function (req, res) {
+  try {
     verifyLobbyRequest(req.body);
     assert('ship' in req.body);
     assert(Number.isInteger(req.body.ship));
   }
-  catch{
+  catch {
     res.status(400).send();
     return;
   }
@@ -541,13 +630,13 @@ app.post('/ban_ship', function(req, res){
   res.status(200).send("Gun ban updated");
 });
 
-app.post('/ban_gun', function(req, res){
-  try{
+app.post('/ban_gun', function (req, res) {
+  try {
     verifyLobbyRequest(req.body);
     assert('gun' in req.body);
     assert(Number.isInteger(req.body.gun));
   }
-  catch{
+  catch {
     res.status(400).send();
     return;
   }
@@ -555,11 +644,11 @@ app.post('/ban_gun', function(req, res){
   res.status(200).send("Gun ban updated");
 });
 
-app.post('/lock_ban', function(req, res){
-  try{
+app.post('/lock_ban', function (req, res) {
+  try {
     verifyLobbyRequest(req.body);
   }
-  catch{
+  catch {
     res.status(400).send();
     return;
   }
@@ -567,11 +656,11 @@ app.post('/lock_ban', function(req, res){
   lobbies[req.body.lobby_id].lockBan(req.body.user_token, req.body.target_phase);
 });
 
-app.post('/skip_ban', function(req, res){
-  try{
+app.post('/skip_ban', function (req, res) {
+  try {
     verifyLobbyRequest(req.body);
   }
-  catch{
+  catch {
     res.status(400).send();
     return;
   }

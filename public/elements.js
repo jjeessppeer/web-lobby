@@ -30,7 +30,7 @@ class LobbyShipItem extends HTMLDivElement {
 
 
 
-    this.shipDropdown.setContent(ships);
+    this.shipDropdown.setContent(ships, Object.keys(ships));
 
 
     this.shipSelectionRow.appendChild(this.shipDropdown);
@@ -94,7 +94,7 @@ class LobbyShipItem extends HTMLDivElement {
     this.gun_dropdowns = [];
     for (let i = 0; i < shipData.guns.length; i++) {
       let dropdown = document.createElement('div', { is: 'item-dropdown' });
-      dropdown.setContent(light_guns);
+      dropdown.setContent(light_guns, Object.keys(light_guns));
       dropdown.setEnabled(this.interactive);
       dropdown.addEventListener('item-selected', event => {postLoadout(this.getLoadoutArray())});
       this.gun_dropdowns.push(dropdown);
@@ -126,21 +126,21 @@ class ItemDropdown extends HTMLDivElement {
     this.classList.toggle('disabled', !enable);
   }
 
-  setContent(dataset) {
+  setContent(dataset, keys) {
     // Dataset is array of [name, image_src]
     this.content.innerHTML = '';
-    for (var i = 0; i < dataset.length; i++) {
+    for (var i = 0; i < keys.length; i++) {
       let img = document.createElement('img');
-      img.title = dataset[i].name;
-      img.src = dataset[i].img;
-      img.dataset.item_id = i;
+      img.title = dataset[keys[i]].name;
+      img.src = dataset[keys[i]].img;
+      img.dataset.item_id = keys[i];
       img.addEventListener('click', event => {
         this.selectItem(event.target.title, event.target.src, event.target.dataset.item_id);
         this.dispatchEvent(new Event('item-selected'));
       });
       this.content.appendChild(img);
     }
-    this.selectItem(dataset[0].name, dataset[0].img, 0);
+    this.selectItem(dataset[keys[0]].name, dataset[keys[0]].img, keys[0]);
   }
 
   selectItem(title, src, item_id) {
@@ -204,11 +204,11 @@ class BanElement extends HTMLDivElement {
     this.ban_type = banType;
     if (banType == "ship"){
       this.header.textContent = "Ban ship";
-      this.dropdown.setContent(ships);
+      this.dropdown.setContent(ships, Object.keys(ships));
     }
     if (banType == "gun"){
       this.header.textContent = "Ban gun";
-      this.dropdown.setContent(light_guns);
+      this.dropdown.setContent(light_guns, Object.keys(light_guns));
     }
   }
 }

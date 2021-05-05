@@ -110,6 +110,8 @@ function requestLobbyUpdate(){
 
 function updateLobbyState(lobbyStateData, ruleset) {
   // Set ships
+
+  document.getElementById('lobbyState').textContent = JSON.stringify(lobbyStateData);
   for (let i = 0; i < lobby_ships.length; i++) {
     // TODO: only update selection if not my ship
     lobby_ships[i].setShip(lobbyStateData.ships[i][0]);
@@ -154,7 +156,7 @@ function updateLobbyState(lobbyStateData, ruleset) {
       }
       if (command == "ship-ban"){
         let shipBan = lobbyStateData.ship_bans[shipBanIdx++];
-        if (shipBan != -1){
+        if (shipBan != -1 && shipBan != 0){
           banned_ships.push(shipBan);
           let img = document.createElement('img');
           img.src = ships[shipBan].img;

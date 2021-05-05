@@ -1,47 +1,47 @@
-var test_ruleset = {
-  "round_time": 5,
-  "team_size": 2,
-  "timeline": [
-          "Waiting for pilots to join",
-          "Waiting for lobby start",
-          "T1S1 ship-ban",
-          "pause",
-          // "T1S1 ship-ban",
-          // "T1S1 ship-ban",
-          // "T1S1 ship-ban",
-          "T1S1 ship-ban",
-          "T1S1 ship-gun-pick", 
-          "T1S1 gun-ban",
-          "T1S1 gun-ban",
-          "T1S1 gun-ban",
-          "T1S1 gun-ban",
-          "T1S1 gun-ban",
-          "T2S1 gun-ban",
-          "T2S1 ship-gun-pick",
-          "T1S2 ship-gun-pick", 
-          "T2S2 ship-gun-pick"
-        ],
-  "password": "",
-  "moderated": false
-};
+// var test_ruleset = {
+//   "round_time": 5,
+//   "team_size": 2,
+//   "timeline": [
+//           "Waiting for pilots to join",
+//           "Waiting for lobby start",
+//           "T1S1 ship-ban",
+//           "pause",
+//           // "T1S1 ship-ban",
+//           // "T1S1 ship-ban",
+//           // "T1S1 ship-ban",
+//           "T1S1 ship-ban",
+//           "T1S1 ship-gun-pick", 
+//           "T1S1 gun-ban",
+//           "T1S1 gun-ban",
+//           "T1S1 gun-ban",
+//           "T1S1 gun-ban",
+//           "T1S1 gun-ban",
+//           "T2S1 gun-ban",
+//           "T2S1 ship-gun-pick",
+//           "T1S2 ship-gun-pick", 
+//           "T2S2 ship-gun-pick"
+//         ],
+//   "password": "",
+//   "moderated": false
+// };
 
 var timeline_presets = {
   "testing": [
     "Waiting for pilots to join",
-    "Waiting for lobby start",
-    "T1S1 ship-ban",
-    "pause",
+    // "Waiting for lobby start",
+    // "T1S1 ship-ban",
+    // "pause",
     // "T1S1 ship-ban",
     // "T1S1 ship-ban",
     // "T1S1 ship-ban",
     "T1S1 ship-ban",
     "T1S1 ship-gun-pick", 
-    "T1S1 gun-ban",
-    "T1S1 gun-ban",
-    "T1S1 gun-ban",
-    "T1S1 gun-ban",
-    "T1S1 gun-ban",
-    "T2S1 gun-ban",
+    // "T1S1 gun-ban",
+    // "T1S1 gun-ban",
+    // "T1S1 gun-ban",
+    // "T1S1 gun-ban",
+    // "T1S1 gun-ban",
+    // "T2S1 gun-ban",
     "T2S1 ship-gun-pick",
     "T1S2 ship-gun-pick", 
     "T2S2 ship-gun-pick"
@@ -182,11 +182,6 @@ function joinLobby2(name, role) {
 
 function createLobby(ruleset) {
   console.log("Requesting lobby creation.");
-
-
-
-  console.log(JSON.stringify(test_ruleset));
-  console.log(JSON.stringify(ruleset));
   httpxPostRequest("/create_lobby", { "ruleset": ruleset }, (response, status) => {
     if (status == 200){
       response = JSON.parse(response);

@@ -30,6 +30,13 @@
     font-family: monospace;
 }
 
+#lobbyState {
+    background-color: var(--dark);
+    font-family: monospace;
+    margin: 10px;
+
+}
+
 #lobbyIdentifier{
     margin: 10px;
 }
