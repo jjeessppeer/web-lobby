@@ -18,37 +18,17 @@ const logOpts = {
 const log = require('simple-node-logger').createRollingFileLogger(logOpts);
 var app = express()
 
-
-// class Member {
-//   constructor(token, ip, name){
-//     this.token = token;
-//     this.ip = ip;
-//     this.name = name;
-//     this.role = 'spectator';
-//     this.ship = -1;
-//   }
-// }
-// var test_ruleset = {
-//   "round_time": 30,
-//   "team_size": 2,
-//   "timeline": [
-//     "Waiting for lobby start",
-//     "T1S1 gun-ban"
-//   ],
-//   "password": "123",
-//   "moderated": false
-// };
-
-
 function closeLobby(lobby_id, interval_id) {
   clearInterval(interval_id);
   delete lobbies[lobby_id];
 }
 
 function cleanLobbies() {
+  // TODO
   // remove old unused lobbies.
   // console.log("Cleaning up lobbies.");
 }
+setInterval(cleanLobbies, 1000);
 
 function verifyLobbyRequest(body) {
   assert('lobby_id' in body);
@@ -59,7 +39,6 @@ function verifyLobbyRequest(body) {
   assert(Number.isInteger(body.target_phase));
 }
 
-setInterval(cleanLobbies, 1000);
 
 
 class Lobby {
@@ -204,9 +183,10 @@ class Lobby {
   }
 
   timelineCheck(role, command, target_phase) {
-    // 0 is current phase
-    // >0 is future phase
-    // <0 is past phase
+    // Returns:
+    //  0 role+command is current phase
+    // >0 role+command is future phase
+    // <0 role+command is past phase
     let timelineStr = `T${role % 2 == 0 ? "1" : "2"}S${(role - (role % 2)) / 2 + 1} ${command}`;
 
     if (target_phase == undefined) target_phase = this.timeline.indexOf(timelineStr);

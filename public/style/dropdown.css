@@ -7,13 +7,15 @@
 .dropdown > img {
     height: 4em;
     width: 4em;
-    border: solid;
-    border-color: var(--border);
-    border-width: 2px;
-    border-radius: 0.5em;
+    outline: 2px solid var(--border);
+    outline-offset: -1px;
+    /* outline- */
+    /* border: solid; */
+    /* border-color: var(--border); */
+    /* border-width: 2px; */
+    /* border-radius: 0.5em; */
     cursor: pointer;
     margin-right: 8px;
-
 }
 
 .dropdown-content {
@@ -42,6 +44,18 @@
     width: 3em;
     border-radius: 0.3em;
 }
+
+.dropdown-content img.disabled {
+    outline: 1.5em solid rgba(0, 0, 0, 0.5);
+    outline-offset: -1.5em;
+    cursor: default;
+}
+
+.dropdown-content img.disabled:hover {
+    cursor: default;
+}
+
+
 
 .dropdown-content div {
     padding-bottom: 0.15em;

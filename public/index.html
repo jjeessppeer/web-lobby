@@ -144,7 +144,7 @@
             &nbsp;&nbsp;&nbsp;&nbsp;"TxSy gun-ban" <br>
             &nbsp;&nbsp;&nbsp;&nbsp;"TxSy ship-gun-pick" <br>
             &nbsp;&nbsp;&nbsp;&nbsp;"pause" <br> -->
-            <textarea id="timelineInput" autocomplete="off" rows="10" cols="30" disabled>hello there</textarea>
+            <textarea id="timelineInput" autocomplete="off" rows="10" cols="30" disabled></textarea>
           </td>
         </tr>
         <tr>
@@ -188,11 +188,12 @@
     // }, 2000);
 
     window.addEventListener('click', function (event) {
-        var dropdowns = document.querySelectorAll(".dropdown");
-        for (let i = 0; i < dropdowns.length; i++) {
-          if (dropdowns[i].querySelector(".dropbtn") == event.target) continue;
-          dropdowns[i].classList.remove('active');
-        }
+      if (event.target.classList.contains('disabled')) return;
+      var dropdowns = document.querySelectorAll(".dropdown");
+      for (let i = 0; i < dropdowns.length; i++) {
+        if (dropdowns[i].querySelector(".dropbtn") == event.target) continue;
+        dropdowns[i].classList.remove('active');
+      }
     })
 
     

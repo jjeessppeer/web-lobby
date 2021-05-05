@@ -109,21 +109,25 @@ function requestLobbyUpdate(){
 }
 
 function updateLobbyState(lobbyStateData, ruleset) {
-  // Set ships
-
   document.getElementById('lobbyState').textContent = JSON.stringify(lobbyStateData);
+
+  current_phase = lobbyStateData.phase;
+  // banned_ships = [];
+  // banned_guns = [];
+
+  // Update ship loadouts
   for (let i = 0; i < lobby_ships.length; i++) {
     // TODO: only update selection if not my ship
+    // - ehh maybe not actually
     lobby_ships[i].setShip(lobbyStateData.ships[i][0]);
     lobby_ships[i].setGuns(lobbyStateData.ships[i][1]);
     lobby_ships[i].name = lobbyStateData.names[i];
     lobby_ships[i].setStatus('');
     lobby_ships[i].setPicking(false);
+    lobby_ships[i].updateBans(lobbyStateData.ship_bans, lobbyStateData.gun_bans);
   }
 
-  current_phase = lobbyStateData.phase;
-  banned_ships = [];
-  banned_guns = [];
+  
 
   // Update timer
   document.getElementById('lobbyTimer').textContent = `${Math.floor(lobbyStateData.timer/60)}:${lobbyStateData.timer%60}`;

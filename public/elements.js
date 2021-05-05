@@ -82,7 +82,6 @@ class LobbyShipItem extends HTMLDivElement {
 
   setShip(shipIndex) {
     if (this.activeShip != undefined && ships[shipIndex].name == ships[this.activeShip].name) return;
-    console.log("selecting new ship")
     this.activeShip = shipIndex;
 
     this.gunSelectionRow.innerHTML = "Weapons<br>";
@@ -99,6 +98,13 @@ class LobbyShipItem extends HTMLDivElement {
       dropdown.addEventListener('item-selected', event => {postLoadout(this.getLoadoutArray())});
       this.gun_dropdowns.push(dropdown);
       this.gunSelectionRow.appendChild(dropdown);
+    }
+  }
+
+  updateBans(ship_bans, gun_bans){
+    this.shipDropdown.updateDisabledKeys(ship_bans);
+    for (let i=0; i<this.gun_dropdowns.length; i++){
+      this.gun_dropdowns[i].updateDisabledKeys(gun_bans);
     }
   }
 }
@@ -126,7 +132,14 @@ class ItemDropdown extends HTMLDivElement {
     this.classList.toggle('disabled', !enable);
   }
 
-  setContent(dataset, keys) {
+  updateDisabledKeys(disabled_keys){
+    this.content.querySelectorAll('img').forEach(img => {
+      let item_id = parseInt(img.dataset.item_id);
+      img.classList.toggle('disabled', disabled_keys.includes(item_id));
+    });
+  }
+
+  setContent(dataset, keys, disabled_keys=[]) {
     // Dataset is array of [name, image_src]
     this.content.innerHTML = '';
     for (var i = 0; i < keys.length; i++) {
@@ -134,7 +147,9 @@ class ItemDropdown extends HTMLDivElement {
       img.title = dataset[keys[i]].name;
       img.src = dataset[keys[i]].img;
       img.dataset.item_id = keys[i];
+      if (disabled_keys.includes(keys[i])) img.classList.add('disabled');
       img.addEventListener('click', event => {
+        if (event.target.classList.contains('disabled')) return;
         this.selectItem(event.target.title, event.target.src, event.target.dataset.item_id);
         this.dispatchEvent(new Event('item-selected'));
       });

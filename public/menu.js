@@ -35,6 +35,7 @@ var timeline_presets = {
     // "T1S1 ship-ban",
     // "T1S1 ship-ban",
     "T1S1 ship-ban",
+    "T1S1 gun-ban",
     "T1S1 ship-gun-pick", 
     // "T1S1 gun-ban",
     // "T1S1 gun-ban",
@@ -72,15 +73,16 @@ function loadRuleset(){
   // Parse custom timeline.
 
   let timeline_selection = document.getElementById('timelineSelection').value;
-  if (timeline_selection != 'custom'){
+  if (timeline_selection != 'Custom'){
     timeline = timeline_presets[timeline_selection];
   }
   else {
     let timeline_string = document.getElementById('timelineInput').value;
+    console.log(timeline_string);
     timeline = timeline_string.split('\n');
   }
   let password = document.getElementById('lobbyPwdInput').value;
-
+  console.log(JSON.stringify(timeline));
   return {
     "round_time": round_time,
     "team_size": team_size,
@@ -93,8 +95,6 @@ function loadRuleset(){
 function initializeMenu() {
 
   document.getElementById('timelineInput').value = timeline_presets[document.getElementById('timelineSelection').value].join('\n');
-
-
 
   document.getElementById('timelineSelection').addEventListener('change', event => {
     if (event.target.value != "Custom"){
@@ -112,7 +112,6 @@ function initializeMenu() {
       closeJoinModal();
     }
   }
-  // openJoinModal("hgello");
 
   // Lobby creation
   document.getElementById("createLobbyBtn").addEventListener('click', event => {
