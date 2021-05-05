@@ -229,6 +229,9 @@ class Lobby {
   }
 
   loadoutAllowed(ship, guns) {
+    // Test if loadout loadout is allowed.
+    // Maybe dont use this and just use legalizeLoadout function instead.
+    // Kinda same functionality ish.
     let shipbanCount = this.commandCount('ship-ban', this.phase);
     let gunbanCount = this.commandCount('gun-ban', this.phase);
     let ship_bans = this.ship_bans.slice(0, shipbanCount);
@@ -242,9 +245,7 @@ class Lobby {
   }
 
   legalizeLoadout(ship, guns) {
-    console.log(JSON.stringify(this.gun_bans));
-    console.log(JSON.stringify(this.ship_bans));
-    console.log("ori: " + JSON.stringify([ship, guns]));
+    // Update loadout to conform by active restrictions.
 
     let shipbanCount = this.commandCount('ship-ban', this.phase);
     let gunbanCount = this.commandCount('gun-ban', this.phase);
@@ -300,6 +301,7 @@ class Lobby {
   }
 
   lockLoadout(user_token, target_phase) {
+    // Confirm the active loadout phase.
     let shipIdx = this.members[user_token].role;
     if (shipIdx < 0) return;
     if (this.timelineCheck(shipIdx, 'ship-gun-pick', target_phase) != 0) return;
@@ -316,6 +318,7 @@ class Lobby {
   }
 
   updateShipBan(user_token, target_phase, ship) {
+    // Update ban preview selection.
     let shipIdx = this.members[user_token].role;
     if (shipIdx < 0) return;
     if (this.timelineCheck(shipIdx, 'ship-ban', target_phase) != 0) return;
@@ -325,6 +328,7 @@ class Lobby {
   }
 
   lockBan(user_token, target_phase) {
+    // Confirm the currently active ban.
     let shipIdx = this.members[user_token].role;
     if (shipIdx < 0) return;
 
@@ -342,7 +346,9 @@ class Lobby {
     }
     this.stepPhase();
   }
+
   skipBan(user_token, target_phase) {
+    // Skip the currently active ban phase
     let shipIdx = this.members[user_token].role;
     if (shipIdx < 0) return;
 
@@ -358,9 +364,8 @@ class Lobby {
     this.stepPhase();
   }
 
-
-
   getNameList() {
+    // Return array of pilot names
     let names = [];
     for (let i = 0; i < 2 * this.team_size; i++) {
       if (i in this.pilots) names.push(this.pilots[i].name);
@@ -370,6 +375,7 @@ class Lobby {
   }
 
   getShipList(role) {
+    // Return the loadouts as viewed by specified role.
     let ships = [];
 
     // Spectator or moderator gets full info.
