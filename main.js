@@ -248,7 +248,7 @@ class Lobby {
       if (ship_bans.includes(ship)) {
         ship = first_allowed_ship;
         guns = [];
-        for (let i=0; i<gameData.ships[i].guns.length; i++) {
+        for (let i=0; i<gameData.ships[ship].guns.length; i++) {
           guns.push(first_allowed_light_gun);
         }
         return [ship, guns];
@@ -388,11 +388,13 @@ app.post('/create_lobby', function(req, res){
     assert('timeline' in ruleset);
     assert(Array.isArray(ruleset.timeline));
     assert(ruleset.timeline.length < 100);
-    const allowed_commands = ['ship-ban', 'gun-ban', 'ship-gun-pick'];
+    const allowed_commands = ['ship-ban', 'gun-ban', 'ship-gun-pick', 'pause'];
+    const allowed_special_commands = ['pause', 'Waiting for pilots to join', 'Waiting for lobby start', 'moderator-start'];
 
     for (let i=1; i<ruleset.timeline.length; i++){
-      if (ruleset.timeline[i] == "Waiting for pilots to join") continue;
-      if (ruleset.timeline[i] == "Waiting for lobby start") continue;
+      // if (ruleset.timeline[i] == "Waiting for pilots to join") continue;
+      // if (ruleset.timeline[i] == "Waiting for lobby start") continue;
+      if (allowed_special_commands.includes(ruleset.timeline[i])) continue;
       let [target, command] = ruleset.timeline[i].split(' ');
       assert(target.charAt(0) == 'T');
       assert(target.charAt(2) == 'S');

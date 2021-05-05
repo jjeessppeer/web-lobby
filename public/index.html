@@ -52,11 +52,17 @@
   </div>
 
   <div id="lobbyScreen" style="display:none">
+    <div id="lobbyIdentifier">Lobby identifier (use to invite/join): <span>abc123ABC321</span></div>
+
     <div id="lobbyPanel">
       <div id="lobbyRedTeam" class="column">
       </div>
       <div id="lobbyCenter" class="column">
+        <!-- <div style="display: flex;"> -->
+          <!-- <div id="lobbyIdentifier" style="flex-grow: 1;flex-basis: 100%;">abc123ABC321</div> -->
         <div id="lobbyTimer">1:00</div>
+
+        <!-- </div> -->
         <br>
         <ul id="lobbyStatus">
           <li class="done">Waiting for pilots to join</li>
@@ -115,8 +121,34 @@
           <td><input id="moderatedInput" type="checkbox"></td>
         </tr>
         <tr>
+          <td><label for="duplicateShiptsCheck">Allow duplicate ships</label></td>
+          <td><input id="duplicateShiptsCheck" type="checkbox" checked></td>
+        </tr>
+        <tr>
+          <td>Drafting timeline</td>
+          <td>
+            <select id="timelineSelection" autocomplete="off">
+              <option value="Fyre">Fyre (size 2)</option>
+              <option value="testing" selected>testing</option>
+              <option value="Custom">Custom</option>
+            </select>
+          </td>
+        </tr>
+        <tr>
+          <td><label for="timelineInput"></label></td>
+          <td>
+            <!-- Enter one event per line.<br>
+            Allowed commands: <br>
+            &nbsp;&nbsp;&nbsp;&nbsp;"TxSy ship-ban" <br>
+            &nbsp;&nbsp;&nbsp;&nbsp;"TxSy gun-ban" <br>
+            &nbsp;&nbsp;&nbsp;&nbsp;"TxSy ship-gun-pick" <br>
+            &nbsp;&nbsp;&nbsp;&nbsp;"pause" <br> -->
+            <textarea id="timelineInput" autocomplete="off" rows="10" cols="30" disabled>hello there</textarea>
+          </td>
+        </tr>
+        <tr>
           <td>Lobby password</td>
-          <td><input id="lobbyPwdInput" type="text" placeholder="" value=""></td>
+          <td><input id="lobbyPwdInput" type="text" placeholder="" value="" autocomplete="off"></td>
         </tr>
 
       </table>

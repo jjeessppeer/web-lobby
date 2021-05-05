@@ -87,7 +87,7 @@ function initializeLobby(ruleset) {
   shipBanElem.style.display = "none";
   document.getElementById('lobbyBanDiv').append(shipBanElem);
 
-
+  document.querySelector('#lobbyIdentifier > span').textContent = current_lobby_id;
   // setInterval();
   setInterval(updateLocal, 200);
   requestLobbyUpdate();
@@ -135,6 +135,9 @@ function updateLobbyState(lobbyStateData, ruleset) {
   document.getElementById('shipBans').innerHTML = "";
   document.getElementById('gunBans').innerHTML = "";
   // document.getElementById('lobbyBanDiv').innerHTML = "";
+  document.getElementById('gunBanElem').style.display = "none";
+  document.getElementById('shipBanElem').style.display = "none";
+
 
   // Update from timeline
   for (let i=0; i<ruleset.timeline.length; i++){
