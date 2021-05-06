@@ -208,22 +208,6 @@ class Lobby {
     return count;
   }
 
-  loadoutAllowed(ship, guns) {
-    // Test if loadout loadout is allowed.
-    // Maybe dont use this and just use legalizeLoadout function instead.
-    // Kinda same functionality ish.
-    let shipbanCount = this.commandCount('ship-ban', this.phase);
-    let gunbanCount = this.commandCount('gun-ban', this.phase);
-    let ship_bans = this.ship_bans.slice(0, shipbanCount);
-    let gun_bans = this.gun_bans.slice(0, gunbanCount);
-    if (ship_bans.includes(ship)) return false;
-    for (let i = 0; i < guns.length; i++) {
-      if (gun_bans.includes(guns[i])) return false;
-      // TODO: check valid gun index
-    }
-    return true;
-  }
-
   legalizeLoadout(ship, guns) {
     // Update loadout to conform by active restrictions.
     // TODO: doesnt care about heavy/light guns.
@@ -236,14 +220,19 @@ class Lobby {
     let gun_bans = this.gun_bans.slice(0, gunbanCount);
     ship_bans.push('0');
 
-    // fix ship
     let first_allowed_light_gun = -1;
     let first_allowed_heavy_gun = -1;
     let first_allowed_ship = -1;
 
     for (const [key, value] of Object.entries(gameData.guns)) {
-      if (!gun_bans.includes(key)) {
+      if (!gun_bans.includes(key) && value.gun_type == 'LIGHT') {
         first_allowed_light_gun = key;
+        break;
+      }
+    }
+    for (const [key, value] of Object.entries(gameData.guns)) {
+      if (!gun_bans.includes(key) && value.gun_type == 'HEAVY') {
+        first_allowed_heavy_gun = key;
         break;
       }
     }
@@ -254,25 +243,36 @@ class Lobby {
       }
     }
 
-    // console.log(first_allowed_ship)
+    let guns_out = [];
 
-    // Ship is banned
+
     if (ship_bans.includes(String(ship))) {
       ship = first_allowed_ship;
-      guns = [];
+      // guns = [];
       for (let i = 0; i < gameData.ships[ship].guns.length; i++) {
-        guns.push(first_allowed_light_gun);
+        if (gameData.ships[ship].guns[i] == 'LIGHT')
+          guns_out.push(first_allowed_light_gun);
+        else
+          guns_out.push(first_allowed_heavy_gun);
       }
-      return [ship, guns];
+      return [ship, guns_out];
     }
     // Fix banned guns
-    for (let i = 0; i < guns.length; i++) {
+    for (let i = 0; i < gameData.ships[ship].guns.length; i++) {
       // Banned gun
-      if (gun_bans.includes(String(guns[i]))) {
-        guns[i] = first_allowed_light_gun;
+      if ( gun_bans.includes(String(guns[i])) ||
+           !(String(guns[i]) in gameData.guns) || 
+           gameData.ships[ship].guns[i] != gameData.guns[guns[i]].gun_type) {
+        if (gameData.ships[ship].guns[i] == 'LIGHT')
+          guns_out.push(first_allowed_light_gun);
+        else
+          guns_out.push(first_allowed_heavy_gun);
+        // guns[i] = first_allowed_light_gun;
       }
+      else
+        guns_out.push(String(guns[i]));
     }
-    return [ship, guns];
+    return [ship, guns_out];
   }
 
   updateLoadout(loadout, user_token, target_phase) {
@@ -433,6 +433,7 @@ class Lobby {
   lobbyState(user_token) {
     let user_role = this.members[user_token].role;
     //TODO: only send enemy loadout when locked or picking.
+    console.log(JSON.stringify(this.getShipList(user_role)));
     return {
       "timer": Math.floor(this.timer),
       "phase": this.phase,
