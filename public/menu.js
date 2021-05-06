@@ -37,6 +37,8 @@ var timeline_presets = {
     "T1S1 ship-ban",
     "T1S1 gun-ban",
     "T1S1 ship-gun-pick", 
+    "T1S1 ship-ban",
+    "T1S1 gun-ban",
     // "T1S1 gun-ban",
     // "T1S1 gun-ban",
     // "T1S1 gun-ban",

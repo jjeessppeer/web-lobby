@@ -433,7 +433,6 @@ class Lobby {
   lobbyState(user_token) {
     let user_role = this.members[user_token].role;
     //TODO: only send enemy loadout when locked or picking.
-    console.log(JSON.stringify(this.getShipList(user_role)));
     return {
       "timer": Math.floor(this.timer),
       "phase": this.phase,

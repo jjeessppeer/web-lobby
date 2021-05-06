@@ -94,7 +94,8 @@ class LobbyShipItem extends HTMLDivElement {
     this.gun_dropdowns = [];
     for (let i = 0; i < shipData.guns.length; i++) {
       let dropdown = document.createElement('div', { is: 'item-dropdown' });
-      dropdown.setContent(light_guns, Object.keys(light_guns));
+      let filtered_keys = Object.keys(light_guns).filter(a => light_guns[a].gun_type == shipData.guns[i]);
+      dropdown.setContent(light_guns, filtered_keys);
       dropdown.setEnabled(this.interactive);
       dropdown.addEventListener('item-selected', event => {postLoadout(this.getLoadoutArray())});
       this.gun_dropdowns.push(dropdown);

@@ -56,11 +56,14 @@
 }
 
 #lobbyTimer {
+    font-family: monospace;
+    font-size: 30px;
+    font-weight: bold;
     /* margin: auto; */
     /* text-align: center; */
     /* flex-grow: 0; */
-    /* margin-top: 10px; */
-    /* margin-bottom: 10px; */
+    margin-top: 10px;
+    margin-bottom: 10px;
 }
 
 #lobbyStatus {
