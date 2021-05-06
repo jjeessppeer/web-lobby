@@ -29,8 +29,9 @@ class LobbyShipItem extends HTMLDivElement {
     });
 
 
-
-    this.shipDropdown.setContent(ships, Object.keys(ships));
+    // let ship_keys = Object.keys(actual_ships).slice();
+    // ship_keys.splice(0, 1);
+    this.shipDropdown.setContent(ships, Object.keys(ships), [], [0]);
 
 
     this.shipSelectionRow.appendChild(this.shipDropdown);
@@ -134,20 +135,29 @@ class ItemDropdown extends HTMLDivElement {
 
   updateDisabledKeys(disabled_keys){
     this.content.querySelectorAll('img').forEach(img => {
-      let item_id = parseInt(img.dataset.item_id);
+      let item_id = img.dataset.item_id;
       img.classList.toggle('disabled', disabled_keys.includes(item_id));
     });
   }
 
-  setContent(dataset, keys, disabled_keys=[]) {
+  setContent(dataset, keys, disabled_keys=[], excluded_keys=[]) {
     // Dataset is array of [name, image_src]
     this.content.innerHTML = '';
+
+    let firstKey = undefined;
     for (var i = 0; i < keys.length; i++) {
       let img = document.createElement('img');
       img.title = dataset[keys[i]].name;
       img.src = dataset[keys[i]].img;
       img.dataset.item_id = keys[i];
-      if (disabled_keys.includes(keys[i])) img.classList.add('disabled');
+
+      let item_id = parseInt(keys[i]);
+      let isDisabled = disabled_keys.includes(item_id);
+      let isExcluded = excluded_keys.includes(item_id);
+      if (isDisabled) img.classList.add('disabled');
+      if (isExcluded) img.style.display = 'none';
+      if (!isDisabled && !isExcluded && firstKey == undefined) firstKey = keys[i];
+
       img.addEventListener('click', event => {
         if (event.target.classList.contains('disabled')) return;
         this.selectItem(event.target.title, event.target.src, event.target.dataset.item_id);
@@ -155,7 +165,7 @@ class ItemDropdown extends HTMLDivElement {
       });
       this.content.appendChild(img);
     }
-    this.selectItem(dataset[keys[0]].name, dataset[keys[0]].img, keys[0]);
+    this.selectItem(dataset[firstKey].name, dataset[firstKey].img, firstKey);
   }
 
   selectItem(title, src, item_id) {
@@ -219,7 +229,7 @@ class BanElement extends HTMLDivElement {
     this.ban_type = banType;
     if (banType == "ship"){
       this.header.textContent = "Ban ship";
-      this.dropdown.setContent(ships, Object.keys(ships));
+      this.dropdown.setContent(ships, Object.keys(ships), [], [0]);
     }
     if (banType == "gun"){
       this.header.textContent = "Ban gun";

@@ -16,18 +16,6 @@ function updateLocal(){
   document.getElementById('lobbyTimer').textContent = `${Math.floor(time_left/60)}:${time_left%60}`;
 }
 
-function updateBans(){
-  // if (user_role < 0) return;
-  // let shipElement = lobby_ships[user_role];
-
-  // let allowedShips = [];
-  // for (let i=0; i<ships.length; i++){
-  //   if (banned_ships.includes(i)) continue;
-  //   allowedShips.push(ships[i]);
-  // }
-  // shipElement.shipDropdown.setContent(allowedShips);
-}
-
 function targetToIdx(target){
   if (target == undefined) return -1;
   // T1S1 -> 0. T2S1 -> 1. T1S2 -> 2
@@ -40,6 +28,18 @@ function targetToIdx(target){
   let i = 2 * (i2-1);
   if (i1 == 2) i += 1;
   return i;
+}
+
+function commandCount(query_command, target_phase) {
+  // Return the number of times the command occurs in the timeline before phase.
+  let endIdx = Math.min(target_phase, active_ruleset.timeline.length);
+  let count = 0;
+  for (let i = 0; i < endIdx; i++) {
+    let [target, command] = active_ruleset.timeline[i].split(' ');
+    if (command == undefined) command = target;
+    if (command == query_command) count++;
+  }
+  return count;
 }
 
 function initializeLobby(ruleset) {
@@ -112,8 +112,12 @@ function updateLobbyState(lobbyStateData, ruleset) {
   document.getElementById('lobbyState').textContent = JSON.stringify(lobbyStateData);
 
   current_phase = lobbyStateData.phase;
-  // banned_ships = [];
-  // banned_guns = [];
+
+  // TODO: also add picked ships if ship exclusivity is turned on.
+  let active_ship_bans = lobbyStateData.ship_bans.slice();
+  let active_gun_bans = lobbyStateData.gun_bans.slice();
+  active_ship_bans.splice(commandCount('ship-ban', current_phase));
+  active_gun_bans.splice(commandCount('gun-ban', current_phase));
 
   // Update ship loadouts
   for (let i = 0; i < lobby_ships.length; i++) {
@@ -124,23 +128,19 @@ function updateLobbyState(lobbyStateData, ruleset) {
     lobby_ships[i].name = lobbyStateData.names[i];
     lobby_ships[i].setStatus('');
     lobby_ships[i].setPicking(false);
-    lobby_ships[i].updateBans(lobbyStateData.ship_bans, lobbyStateData.gun_bans);
+    lobby_ships[i].updateBans(active_ship_bans, active_gun_bans);
   }
-
-  
 
   // Update timer
   document.getElementById('lobbyTimer').textContent = `${Math.floor(lobbyStateData.timer/60)}:${lobbyStateData.timer%60}`;
   timer_time = lobbyStateData.timer;
   timer_start = Date.now();
 
-
   let shipBanIdx = 0;
   let gunBanIdx = 0;
 
   document.getElementById('shipBans').innerHTML = "";
   document.getElementById('gunBans').innerHTML = "";
-  // document.getElementById('lobbyBanDiv').innerHTML = "";
   document.getElementById('gunBanElem').style.display = "none";
   document.getElementById('shipBanElem').style.display = "none";
 
@@ -217,8 +217,6 @@ function updateLobbyState(lobbyStateData, ruleset) {
     else if (lobbyStateData.phase == i) 
       lobby_phases[i].classList.add('active');
   }
-  
-  updateBans();
 
 }
 

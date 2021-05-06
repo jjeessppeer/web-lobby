@@ -8,6 +8,7 @@ const gameData = require('./gameData.js');
 // var bodyParser = require("body-parser");
 var requestIp = require('request-ip');
 const assert = require('assert');
+const { json } = require('body-parser');
 
 const logOpts = {
   fileNamePattern: 'log-<DATE>.log',
@@ -38,8 +39,6 @@ function verifyLobbyRequest(body) {
   assert(body.user_token in lobbies[body.lobby_id].members);
   assert(Number.isInteger(body.target_phase));
 }
-
-
 
 class Lobby {
   constructor(timeline, round_time, team_size, password, moderated = false) {
@@ -83,11 +82,11 @@ class Lobby {
 
     for (let i = 0; i < this.commandCount('gun-ban', this.timeline.length); i++) {
       // this.gun_bans.push(0);
-      this.gun_ban_previews.push(0);
+      this.gun_ban_previews.push('0');
     }
     for (let i = 0; i < this.commandCount('ship-ban', this.timeline.length); i++) {
       // this.ship_bans.push(0);
-      this.ship_ban_previews.push(0);
+      this.ship_ban_previews.push('1');
     }
 
     this.intervalId = setInterval(() => this.update(), 1000);
@@ -106,10 +105,10 @@ class Lobby {
         let activeCommand = this.getActiveCommand();
         // Check if ban timed out.
         if (activeCommand == 'gun-ban') {
-          this.gun_bans.push(-1);
+          this.gun_bans.push('-1');
         }
         if (activeCommand == 'ship-ban') {
-          this.ship_bans.push(-1);
+          this.ship_bans.push('-1');
         }
 
         this.stepPhase();
@@ -125,10 +124,11 @@ class Lobby {
       if (this.timelineCheck(i, 'ship-gun-pick') < 0) continue;
 
       // Fix loadout if not valid.
-      if (!this.loadoutAllowed(this.ships[i][0], this.ships[i][1])) {
-        console.log("fixing loadout");
-        this.ships[i] = this.legalizeLoadout(this.ships[i][0], this.ships[i][1]);
-      }
+      // if (!this.loadoutAllowed(this.ships[i][0], this.ships[i][1])) {
+      //   console.log("fixing loadout");
+      this.ships[i] = this.legalizeLoadout(this.ships[i][0], this.ships[i][1]);
+      // console.log(this.ships[i][0])
+      // }
     }
     // return ships;
 
@@ -176,7 +176,7 @@ class Lobby {
     };
     if (role >= 0) {
       this.pilots[role] = this.members[user_token];
-      this.ships[role] = this.legalizeLoadout(1, [1, 1, 1, 1, 1]);
+      this.ships[role] = this.legalizeLoadout(0, []);
     }
 
     return user_token;
@@ -226,11 +226,15 @@ class Lobby {
 
   legalizeLoadout(ship, guns) {
     // Update loadout to conform by active restrictions.
+    // TODO: doesnt care about heavy/light guns.
+
+    ship = String(ship);
 
     let shipbanCount = this.commandCount('ship-ban', this.phase);
     let gunbanCount = this.commandCount('gun-ban', this.phase);
     let ship_bans = this.ship_bans.slice(0, shipbanCount);
     let gun_bans = this.gun_bans.slice(0, gunbanCount);
+    ship_bans.push('0');
 
     // fix ship
     let first_allowed_light_gun = -1;
@@ -250,8 +254,10 @@ class Lobby {
       }
     }
 
+    // console.log(first_allowed_ship)
+
     // Ship is banned
-    if (ship_bans.includes(ship)) {
+    if (ship_bans.includes(String(ship))) {
       ship = first_allowed_ship;
       guns = [];
       for (let i = 0; i < gameData.ships[ship].guns.length; i++) {
@@ -259,25 +265,36 @@ class Lobby {
       }
       return [ship, guns];
     }
-
     // Fix banned guns
     for (let i = 0; i < guns.length; i++) {
       // Banned gun
-      if (gun_bans.includes(guns[i])) {
+      if (gun_bans.includes(String(guns[i]))) {
         guns[i] = first_allowed_light_gun;
       }
     }
-    console.log("fix: " + JSON.stringify([ship, guns]));
     return [ship, guns];
   }
 
   updateLoadout(loadout, user_token, target_phase) {
+    loadout[0] = String(loadout[0]);
+    loadout[1] = loadout[1].map(String);
+
     let shipIdx = this.members[user_token].role;
     if (shipIdx < 0) return;
     // if (this.isLocked(shipIdx)) return;
     if (this.timelineCheck(shipIdx, 'ship-gun-pick', target_phase) < 0) return;
-    if (!this.loadoutAllowed(loadout[0], loadout[1])) return;
-    this.ships[shipIdx] = [loadout[0], loadout[1]];
+    loadout = this.legalizeLoadout(loadout[0], loadout[1]);
+    // if (!this.loadoutAllowed(loadout[0], loadout[1])) return;
+    let ship = String(loadout[0]);
+    if (!(ship in gameData.ships)) return;
+    let guns = [];
+
+    for (let i=0; i<gameData.ships[ship].guns.length; i++){
+      let gun = loadout[1][i];
+      if (!(gun in gameData.guns)) return;
+      guns.push(String(gun));
+    }
+    this.ships[shipIdx] = [ship, guns];
   }
 
   lockLoadout(user_token, target_phase) {
@@ -294,7 +311,7 @@ class Lobby {
     if (this.timelineCheck(shipIdx, 'gun-ban', target_phase) != 0) return;
     if (gun == 0) return;
     let banIdx = this.commandCount('gun-ban', target_phase);
-    this.gun_ban_previews[banIdx] = gun;
+    this.gun_ban_previews[banIdx] = String(gun);
   }
 
   updateShipBan(user_token, target_phase, ship) {
@@ -304,7 +321,7 @@ class Lobby {
     if (this.timelineCheck(shipIdx, 'ship-ban', target_phase) != 0) return;
     if (ship == 0) return;
     let banIdx = this.commandCount('ship-ban', target_phase);
-    this.ship_ban_previews[banIdx] = ship;
+    this.ship_ban_previews[banIdx] = String(ship);
   }
 
   lockBan(user_token, target_phase) {
@@ -338,8 +355,8 @@ class Lobby {
 
     let command = isGunBan ? 'gun-ban' : 'ship-ban';
     let banIdx = this.commandCount(command, target_phase);
-    if (isGunBan) this.gun_bans[banIdx] = -1;
-    else this.ship_bans[banIdx] = -1;
+    if (isGunBan) this.gun_bans[banIdx] = '-1';
+    else this.ship_bans[banIdx] = '-1';
 
     this.stepPhase();
   }
@@ -445,6 +462,7 @@ app.get('/lobbyb', function (req, res) {
 
 app.post('/create_lobby', function (req, res) {
   try {
+
     assert('ruleset' in req.body);
     let ruleset = req.body.ruleset;
     assert('round_time' in ruleset);
@@ -480,6 +498,10 @@ app.post('/create_lobby', function (req, res) {
   }
   catch {
     res.status(400).send("Invalid lobby creation parameters.");
+    return;
+  }
+  if (Object.keys(lobbies).length > 500){
+    res.status(400).send("Too many currently active lobbies.");
     return;
   }
   let lobby = new Lobby(req.body.ruleset.timeline, req.body.ruleset.round_time, req.body.ruleset.team_size, req.body.ruleset.password);
