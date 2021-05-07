@@ -20,7 +20,7 @@ function httpxPostRequest(url, data, callback = null, timeout_callback = null) {
     else if (xhttp.readyState == 4 && xhttp.status == 400){
       console.log(xhttp);
       console.log(xhttp.response);
-      alert(xhttp.response);
+      alert(xhttp.response + "\n" + "Refresh page to reset.");
     }
   }
   // xhttp.ontimeout = timeout_callback;

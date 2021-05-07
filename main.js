@@ -8,20 +8,10 @@ const gameData = require('./gameData.js');
 // var bodyParser = require("body-parser");
 var requestIp = require('request-ip');
 const assert = require('assert');
-// const { json } = require('body-parser');
-// const { time } = require('console');
-
-// const logOpts = {
-//   fileNamePattern: 'log-<DATE>.log',
-//   logDirectory: 'logs',
-//   timestampFormat: 'YYYY-MM-DD HH:mm:ss.SSS',
-//   dateFormat: 'YYYY.MM.DD'
-// }
-// const log = require('simple-node-logger').createRollingFileLogger(logOpts);
 
 var app = express()
 
-const LOBBY_LIFETIME = 3600;
+const LOBBY_LIFETIME = 1800;
 const MAX_LOBBIES = 100;
 const MAX_MEMBERS = 50;
 
@@ -610,7 +600,7 @@ app.post('/create_lobby', function (req, res) {
     return;
   }
   if (Object.keys(lobbies).length >= MAX_LOBBIES){
-    res.status(400).send("Too many currently active lobbies.");
+    res.status(400).send("Too many currently active lobbies. Wait until some are closed.");
     return;
   }
   let lobby = new Lobby(
@@ -622,7 +612,7 @@ app.post('/create_lobby', function (req, res) {
     req.body.ruleset.moderated,
     req.body.ruleset.allow_duplicate_ships);
   lobbies[lobby.lobby_id] = lobby;
-  console.log("Created lobby " + lobby.lobby_id);
+  console.log(`Created lobby ${lobby.lobby_id} ${Object.keys(lobbies).length}/${MAX_LOBBIES}`);
   res.status(200).json({
     "lobby_id": lobby.lobby_id
   });

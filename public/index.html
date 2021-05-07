@@ -140,7 +140,7 @@
           <td>Drafting timeline</td>
           <td>
             <select id="timelineSelection" autocomplete="off">
-              <option value="Fyre">Fyre (size 2)</option>
+              <option value="Fyre (2v2)">Fyre (size 2)</option>
               <option value="testing" selected>testing</option>
               <option value="Custom">Custom</option>
             </select>
@@ -184,19 +184,7 @@
   </div>
 
   <script>
-    console.log("hello");
     initializeMenu();
-
-    
-
-    
-
-    // initializeLobby(lobby_init_data);
-    // updateLobbyState(lobby_state);
-    // window.setInterval(function(){
-    //   updateLobbyState(lobby_state);
-    //   lobby_state.phase += 1;
-    // }, 2000);
 
     window.addEventListener('click', function (event) {
       if (event.target.classList.contains('disabled')) return;
@@ -205,16 +193,8 @@
         if (dropdowns[i].querySelector(".dropbtn") == event.target) continue;
         dropdowns[i].classList.remove('active');
       }
-    })
-
+    });
     
-
-    // httpxPostRequest("/create_lobby", "notobj", function(response){
-    //   console.log(`Response ${response} ${this}`);
-    // });
-
-    
-
     
   </script>
 </body>

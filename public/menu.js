@@ -36,17 +36,17 @@ var timeline_presets = {
     "T1S2 ship-gun-pick", 
     "T2S2 ship-gun-pick"
   ],
-  "Fyre": [
+  "Fyre (2v2)": [
     // "Waiting for pilots to join",
     // "Waiting for lobby start",
-    "T1S1 ship-ban",
-    "T2S1 ship-ban",
-    "T1S1 ship-gun-pick",
-    "T2S1 ship-gun-pick",
-    "T2S1 gun-ban",
-    "T1S1 gun-ban",
-    "T1S2 ship-gun-pick",
-    "T2S2 ship-gun-pick"
+    "T1S1 ship-ban 30",
+    "T2S1 ship-ban 30",
+    "T1S1 ship-gun-pick 45",
+    "T2S1 ship-gun-pick 45",
+    "T2S1 gun-ban 30",
+    "T1S1 gun-ban 30",
+    "T1S2 ship-gun-pick 45",
+    "T2S2 ship-gun-pick 45"
   ]
 }
 
@@ -86,9 +86,6 @@ function loadRuleset(){
   let moderated = document.getElementById('moderatedInput').checked;
   let allow_duplicate_ships = document.getElementById('duplicateShipsCheck').checked;
 
-
-  console.log(timeline);
-  console.log(timeline_times);
   return {
     "round_time": round_time,
     "team_size": team_size,
@@ -111,15 +108,14 @@ function initializeMenu() {
     }
     else {
       document.getElementById('timelineInput').disabled = false;
-
     }
-  })
+  });
 
-  window.onclick = function (event) {
-    if (event.target == document.getElementById("lobbyJoinModal")) {
-      closeJoinModal();
-    }
-  }
+  // window.onclick = function (event) {
+  //   if (event.target == document.getElementById("lobbyJoinModal")) {
+  //     closeJoinModal();
+  //   }
+  // }
 
   // Lobby creation
   document.getElementById("createLobbyBtn").addEventListener('click', event => {
@@ -155,34 +151,25 @@ function closeJoinModal(){
 function joinLobby1(lobby_id, password) {
   console.log(`Attempting to join_1 lobby ${lobby_id} ${password}`);
   httpxPostRequest("/join_lobby_1", { "lobby_id": lobby_id, "password": password }, (response, status) => {
-    if (status == 200){
-      response = JSON.parse(response);
-      console.log(`Join_1 OK ${response.lobby_id}`);
-      current_lobby_id = response.lobby_id;
-      openJoinModal(response.lobby_id);
-    }
-    else {
-      console.log(`${response}`);
-    }
+    response = JSON.parse(response);
+    console.log(`Join_1 OK ${response.lobby_id}`);
+    current_lobby_id = response.lobby_id;
+    openJoinModal(response.lobby_id);
   });
 }
 
 function joinLobby2(name, role) {
   console.log(`Attempting to join_2 lobby ${current_lobby_id} ${name} ${role}`);
   httpxPostRequest("/join_lobby_2", { "lobby_id": current_lobby_id, "username": name, "role": role }, (response, status) => {
-    if (status == 200){
-      response = JSON.parse(response);
-      console.log(`Join_2 OK ${JSON.stringify(response)}`);
-      user_token = response.token;
-      active_ruleset = response.ruleset;
-      user_role = response.role;
-      closeJoinModal();
-      initializeLobby(active_ruleset);
-      document.getElementById("lobbyScreen").style.display = "block";
-    }
-    else {
-      console.log(`${response}`);
-    }
+    response = JSON.parse(response);
+    console.log(`Join_2 OK ${JSON.stringify(response)}`);
+    user_token = response.token;
+    active_ruleset = response.ruleset;
+    user_role = response.role;
+    closeJoinModal();
+    initializeLobby(active_ruleset);
+    document.getElementById("lobbyScreen").style.display = "block";
+    document.getElementById("startScreen").style.display = "none";
   });
 }
 
@@ -190,13 +177,8 @@ function joinLobby2(name, role) {
 function createLobby(ruleset) {
   console.log("Requesting lobby creation.");
   httpxPostRequest("/create_lobby", { "ruleset": ruleset }, (response, status) => {
-    if (status == 200){
-      response = JSON.parse(response);
-      console.log(`Lobby created ${response.lobby_id}`);
-      joinLobby1(response.lobby_id, ruleset.password);
-    }
-    else {
-      console.log(`${response}`);
-    }
+    response = JSON.parse(response);
+    console.log(`Lobby created ${response.lobby_id}`);
+    joinLobby1(response.lobby_id, ruleset.password);
   });
 }
