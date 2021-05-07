@@ -95,7 +95,7 @@ class Lobby {
       this.lobby_id = crypto.randomBytes(4).toString('hex');
     } while (this.lobby_id in lobbies);
 
-    console.log(`creating lobby ${this.lobby_id}`)
+    console.log(`Creating lobby ${this.lobby_id}`)
 
     this.members = {};
     this.pilots = {};
@@ -160,11 +160,7 @@ class Lobby {
       if (this.timelineCheck(i, 'ship-gun-pick') < 0) continue;
 
       // Fix loadout if not valid.
-      // if (!this.loadoutAllowed(this.ships[i][0], this.ships[i][1])) {
-      //   console.log("fixing loadout");
       this.ships[i] = this.legalizeLoadout(this.ships[i][0], this.ships[i][1]);
-      // console.log(this.ships[i][0])
-      // }
     }
     // return ships;
 
@@ -647,8 +643,6 @@ app.post('/join_lobby_1', function (req, res) {
     return;
   }
   let lobby = lobbies[lobby_id];
-  console.log(lobby.password);
-  console.log(req.body.password);
   if (lobby.password != req.body.password) {
     res.status(400).send('Invalid password.');
     return;
