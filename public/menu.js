@@ -87,6 +87,7 @@ function loadRuleset(){
   console.log(JSON.stringify(timeline));
 
   let moderated = document.getElementById('moderatedInput').checked;
+  let allow_duplicate_ships = document.getElementById('duplicateShipsCheck').checked;
 
   return {
     "round_time": round_time,
@@ -94,7 +95,7 @@ function loadRuleset(){
     "timeline": timeline,
     "moderated": moderated,
     "password": password,
-    "allow_duplicate_ships": false
+    "allow_duplicate_ships": allow_duplicate_ships
   }
 }
 

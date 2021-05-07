@@ -134,6 +134,9 @@ function updateLobbyState(lobbyStateData, ruleset) {
   let active_gun_bans = lobbyStateData.gun_bans.slice();
   active_ship_bans.splice(commandCount('ship-ban', current_phase));
   active_gun_bans.splice(commandCount('gun-ban', current_phase));
+  if (!ruleset.allow_duplicate_ships){
+    active_ship_bans = active_ship_bans.concat(lobbyStateData.picked_ships);
+  }
 
   // Update ship loadouts
   for (let i = 0; i < lobby_ships.length; i++) {

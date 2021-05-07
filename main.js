@@ -255,12 +255,13 @@ class Lobby {
     ship_bans.push('0');
 
     if (!this.allow_duplicate_ships){
-      for (let i = 0; i < 2 * this.team_size; i++) {
-        if (!(i in this.ships)) continue;
-        // Only check locked ships.
-        if (this.timelineCheck(i, 'ship-gun-pick') >= 0) continue;
-        ship_bans.push(this.ships[i][0]);
-      }
+      ship_bans = ship_bans.concat(this.getPickedShips());
+      // for (let i = 0; i < 2 * this.team_size; i++) {
+      //   if (!(i in this.ships)) continue;
+      //   // Only check locked ships.
+      //   if (this.timelineCheck(i, 'ship-gun-pick') >= 0) continue;
+      //   ship_bans.push(this.ships[i][0]);
+      // }
     }
 
     let first_allowed_light_gun = -1;
@@ -492,6 +493,17 @@ class Lobby {
     return shipBans;
   }
 
+  getPickedShips() {
+    let picked_ships = [];
+    for (let i = 0; i < 2 * this.team_size; i++) {
+      if (!(i in this.ships)) continue;
+      // Only check locked ships.
+      if (this.timelineCheck(i, 'ship-gun-pick') >= 0) continue;
+      picked_ships.push(this.ships[i][0]);
+    }
+    return picked_ships;
+  }
+
   lobbyState(user_token) {
     let user_role = this.members[user_token].role;
     //TODO: only send enemy loadout when locked or picking.
@@ -500,6 +512,7 @@ class Lobby {
       "paused": this.paused,
       "phase": this.phase,
       "ships": this.getShipList(user_role),
+      "picked_ships": this.getPickedShips(),
       "ship_bans": this.getShipBans(),
       "gun_bans": this.getGunBans(),
       "names": this.getNameList()
