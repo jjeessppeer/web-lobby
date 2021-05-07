@@ -178,8 +178,8 @@ var light_guns = {
     gun_type: "HEAVY"
   },
   '20':{  
-    name: "Detonator [MK. S]",
-    img: "images/guns/Detonator [MK. S].jpg",
+    name: "Detonator [Mk. S]",
+    img: "images/guns/Detonator [Mk. S].jpg",
     gun_type: "HEAVY"
   }
 };
