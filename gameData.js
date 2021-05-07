@@ -133,8 +133,8 @@ var light_guns = {
     gun_type: "LIGHT"
   },
   '12': {
-    name: "Tempest [MK. S]",
-    img: "images/guns/Tempest [MK. S].jpg",
+    name: "Tempest [Mk. S]",
+    img: "images/guns/Tempest [Mk. S].jpg",
     gun_type: "LIGHT"
   },
   '13': {
@@ -177,7 +177,7 @@ var light_guns = {
     img: "images/guns/Nemesis.jpg",
     gun_type: "HEAVY"
   },
-  '21':{  
+  '20':{  
     name: "Detonator [MK. S]",
     img: "images/guns/Detonator [MK. S].jpg",
     gun_type: "HEAVY"
