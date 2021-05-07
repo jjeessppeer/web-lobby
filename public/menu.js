@@ -26,17 +26,19 @@
 // };
 
 var timeline_presets = {
-  "testing": [
+  "example": [
     "T1S1 ship-ban 20",
     "T1S1 gun-ban 30",
     "T1S1 ship-gun-pick 45", 
     "T1S1 ship-ban 60",
+    "pause 15",
     "T1S1 gun-ban",
     "T2S1 ship-gun-pick",
     "T1S2 ship-gun-pick", 
-    "T2S2 ship-gun-pick"
+    "T2S2 ship-gun-pick",
+    "pause 15",
   ],
-  "Fyre (2v2)": [
+  "Mini (2v2)": [
     // "Waiting for pilots to join",
     // "Waiting for lobby start",
     "T1S1 ship-ban 30",

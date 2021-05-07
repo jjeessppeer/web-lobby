@@ -5,8 +5,8 @@
 }
 
 .dropdown > img {
-    height: 4em;
-    width: 4em;
+    height: 6em;
+    width: 6em;
     outline: 2px solid var(--border);
     outline-offset: -1px;
     /* outline- */
@@ -40,14 +40,14 @@
 
 .dropdown-content img {
     margin: 2px;
-    height: 3em;
-    width: 3em;
+    height: 5em;
+    width: 5em;
     border-radius: 0.3em;
 }
 
 .dropdown-content img.disabled {
-    outline: 1.5em solid rgba(0, 0, 0, 0.5);
-    outline-offset: -1.5em;
+    outline: 2.5em solid rgba(0, 0, 0, 0.5);
+    outline-offset: -2.5em;
     cursor: default;
 }
 
