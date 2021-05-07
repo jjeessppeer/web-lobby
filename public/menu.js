@@ -93,7 +93,8 @@ function loadRuleset(){
     "team_size": team_size,
     "timeline": timeline,
     "moderated": moderated,
-    "password": password
+    "password": password,
+    "allow_duplicate_ships": false
   }
 }
 

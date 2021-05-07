@@ -48,7 +48,7 @@ function verifyLobbyRequest(body) {
 }
 
 class Lobby {
-  constructor(timeline, round_time, team_size, password, moderated) {
+  constructor(timeline, round_time, team_size, password, moderated, allow_duplicate_ships) {
 
     if (moderated){
       timeline.unshift('Waiting for moderator start...');
@@ -57,18 +57,18 @@ class Lobby {
     
     this.timeline = timeline;
 
-
-
     this.round_time = round_time;
     this.team_size = team_size;
     this.password = password;
+    this.allow_duplicate_ships = allow_duplicate_ships;
 
     this.ruleset = {
       "round_time": round_time,
       "team_size": team_size,
       "timeline": timeline,
       "password": password,
-      "moderated": moderated
+      "moderated": moderated,
+      "allow_duplicate_ships": allow_duplicate_ships
     };
 
     this.phase = 0;
@@ -171,8 +171,6 @@ class Lobby {
     return this.timeline[this.phase];
   }
 
-
-
   addMember(role, name) {
     let user_token;
     do {
@@ -255,6 +253,15 @@ class Lobby {
     let ship_bans = this.ship_bans.slice(0, shipbanCount);
     let gun_bans = this.gun_bans.slice(0, gunbanCount);
     ship_bans.push('0');
+
+    if (!this.allow_duplicate_ships){
+      for (let i = 0; i < 2 * this.team_size; i++) {
+        if (!(i in this.ships)) continue;
+        // Only check locked ships.
+        if (this.timelineCheck(i, 'ship-gun-pick') >= 0) continue;
+        ship_bans.push(this.ships[i][0]);
+      }
+    }
 
     let first_allowed_light_gun = -1;
     let first_allowed_heavy_gun = -1;
@@ -415,8 +422,6 @@ class Lobby {
     this.stepPhase();
   }
 
-
-
   getNameList() {
     // Return array of pilot names
     let names = [];
@@ -474,6 +479,7 @@ class Lobby {
     }
     return shipBans;
   }
+
   getGunBans() {
     let shipBans = [];
     let count = 0;
@@ -535,6 +541,9 @@ app.post('/create_lobby', function (req, res) {
     assert('moderated' in ruleset);
     assert(typeof ruleset.moderated == "boolean");
 
+    assert('allow_duplicate_ships' in ruleset);
+    assert(typeof ruleset.allow_duplicate_ships == "boolean");
+
     assert('timeline' in ruleset);
     assert(Array.isArray(ruleset.timeline));
     assert(ruleset.timeline.length < 100);
@@ -568,7 +577,13 @@ app.post('/create_lobby', function (req, res) {
     res.status(400).send("Too many currently active lobbies.");
     return;
   }
-  let lobby = new Lobby(req.body.ruleset.timeline, req.body.ruleset.round_time, req.body.ruleset.team_size, req.body.ruleset.password, req.body.ruleset.moderated);
+  let lobby = new Lobby(
+    req.body.ruleset.timeline, 
+    req.body.ruleset.round_time, 
+    req.body.ruleset.team_size, 
+    req.body.ruleset.password, 
+    req.body.ruleset.moderated,
+    req.body.ruleset.allow_duplicate_ships);
   lobbies[lobby.lobby_id] = lobby;
   console.log("Created lobby " + lobby.lobby_id);
   res.status(200).json({
