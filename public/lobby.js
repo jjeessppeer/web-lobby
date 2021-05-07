@@ -146,7 +146,9 @@ function updateLobbyState(lobbyStateData, ruleset) {
     lobby_ships[i].setGuns(lobbyStateData.ships[i][1]);
     lobby_ships[i].name = lobbyStateData.names[i];
     lobby_ships[i].setStatus('');
-    lobby_ships[i].setPicking(false);
+    // lobby_ships[i].setPicking(false);
+    lobby_ships[i].classList.toggle('active', false);
+    lobby_ships[i].classList.toggle('picking', false);
     lobby_ships[i].updateBans(active_ship_bans, active_gun_bans);
   }
 
@@ -199,8 +201,12 @@ function updateLobbyState(lobbyStateData, ruleset) {
       }
     }
     if (lobbyStateData.phase == i && shipIdx != -1){
-      lobby_ships[shipIdx].setPicking(true);
-      if (command == "ship-gun-pick") lobby_ships[shipIdx].setStatus('PICKING SHIP AND GUNS');
+      // lobby_ships[shipIdx].setPicking(true);
+      lobby_ships[shipIdx].classList.toggle('active', true);
+      if (command == "ship-gun-pick") {
+        lobby_ships[shipIdx].setStatus('PICKING SHIP AND GUNS');
+        lobby_ships[shipIdx].classList.toggle('picking', true);
+      }
       if (command == "ship-ban") lobby_ships[shipIdx].setStatus('BANNING SHIP');
 
       // Someone currently banning gun

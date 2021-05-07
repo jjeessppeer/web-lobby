@@ -8,29 +8,40 @@ const gameData = require('./gameData.js');
 // var bodyParser = require("body-parser");
 var requestIp = require('request-ip');
 const assert = require('assert');
-const { json } = require('body-parser');
-const { time } = require('console');
+// const { json } = require('body-parser');
+// const { time } = require('console');
 
-const logOpts = {
-  fileNamePattern: 'log-<DATE>.log',
-  logDirectory: 'logs',
-  timestampFormat: 'YYYY-MM-DD HH:mm:ss.SSS',
-  dateFormat: 'YYYY.MM.DD'
-}
-const log = require('simple-node-logger').createRollingFileLogger(logOpts);
+// const logOpts = {
+//   fileNamePattern: 'log-<DATE>.log',
+//   logDirectory: 'logs',
+//   timestampFormat: 'YYYY-MM-DD HH:mm:ss.SSS',
+//   dateFormat: 'YYYY.MM.DD'
+// }
+// const log = require('simple-node-logger').createRollingFileLogger(logOpts);
+
 var app = express()
 
-function closeLobby(lobby_id, interval_id) {
-  clearInterval(interval_id);
+const LOBBY_LIFETIME = 3600;
+const MAX_LOBBIES = 100;
+const MAX_MEMBERS = 50;
+
+function removeLobby(lobby_id) {
+  clearInterval(lobbies[lobby_id].intervalId);
   delete lobbies[lobby_id];
+  console.log(`Removed lobby ${lobby_id}`);
 }
 
 function cleanLobbies() {
-  // TODO
-  // remove old unused lobbies.
-  // console.log("Cleaning up lobbies.");
+  let time = Date.now();
+  for (const [token, lobby] of Object.entries(lobbies)) {
+    let lobby_age = (time - lobby.creation_time) / 1000;
+    if (lobby_age > LOBBY_LIFETIME){
+      removeLobby(token);
+    }
+  }
+  
 }
-setInterval(cleanLobbies, 1000);
+setInterval(cleanLobbies, 5000);
 
 function verifyLobbyRequest(body) {
   try {
@@ -49,7 +60,7 @@ function verifyLobbyRequest(body) {
 
 class Lobby {
   constructor(timeline, round_time, team_size, password, moderated, allow_duplicate_ships) {
-
+    this.creation_time = Date.now();
     if (moderated){
       timeline.unshift('Waiting for moderator start...');
     }
@@ -172,6 +183,7 @@ class Lobby {
   }
 
   addMember(role, name) {
+    if (Object.keys(this.members).length >= MAX_MEMBERS) return false;
     let user_token;
     do {
       user_token = crypto.randomBytes(4).toString('hex');
@@ -586,7 +598,7 @@ app.post('/create_lobby', function (req, res) {
     res.status(400).send("Invalid lobby creation parameters.");
     return;
   }
-  if (Object.keys(lobbies).length > 500){
+  if (Object.keys(lobbies).length >= MAX_LOBBIES){
     res.status(400).send("Too many currently active lobbies.");
     return;
   }

@@ -172,22 +172,11 @@
     padding: 10px;
 }
 
-.LobbyShipItem.picking{
+.LobbyShipItem.active{
     background-color: var(--light);
 }
 
-.LobbyShipItem.picking > div:first-child{
-    font-weight: bold;
-}
-
-.LobbyShipItem > button{
-    display: none;
-}
-.LobbyShipItem.isMine.picking > button{
-    display: block;
-}
-
-.LobbyShipItem.isMine.picking{
+.LobbyShipItem.isMine.active{
     background: repeating-linear-gradient(
         45deg,
         var(--light),
@@ -196,6 +185,24 @@
         var(--medium) 60px
     );
 }
+
+.LobbyShipItem.active > div:first-child{
+    font-weight: bold;
+}
+
+/* .LobbyShipItem.picking{
+} */
+
+
+
+.LobbyShipItem > button{
+    display: none;
+}
+.LobbyShipItem.isMine.picking > button{
+    display: block;
+}
+
+
 
 .LobbyShipItem:not(:last-child){
     border-bottom: 2px solid var(--light);
