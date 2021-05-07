@@ -59,14 +59,17 @@ function verifyLobbyRequest(body) {
 }
 
 class Lobby {
-  constructor(timeline, round_time, team_size, password, moderated, allow_duplicate_ships) {
+  constructor(timeline, timeline_times, round_time, team_size, password, moderated, allow_duplicate_ships) {
     this.creation_time = Date.now();
     if (moderated){
       timeline.unshift('Waiting for moderator start...');
+      timeline_times.unshift(0);
     }
     timeline.unshift('Waiting for pilots to join...');
+    timeline_times.unshift(0);
     
     this.timeline = timeline;
+    this.timeline_times = timeline_times;
 
     this.round_time = round_time;
     this.team_size = team_size;
@@ -77,6 +80,7 @@ class Lobby {
       "round_time": round_time,
       "team_size": team_size,
       "timeline": timeline,
+      "timeline_times": timeline_times,
       "password": password,
       "moderated": moderated,
       "allow_duplicate_ships": allow_duplicate_ships
@@ -85,7 +89,7 @@ class Lobby {
     this.phase = 0;
     this.paused = false;
     this.lastUpdateTime = Date.now();
-    this.timer = this.round_time;
+    this.timer = this.timeline_times[0];
 
     do {
       this.lobby_id = crypto.randomBytes(4).toString('hex');
@@ -98,9 +102,6 @@ class Lobby {
     this.ships = {};
     this.moderator_token = undefined;
     this.moderated = moderated;
-    // for (let i=0; i<this.team_size; i++){
-    //   this.ships.push([0, [0, 0, 0, 0]]);
-    // }
 
     this.gun_bans = [];
     this.ship_bans = [];
@@ -170,8 +171,12 @@ class Lobby {
   }
 
   stepPhase() {
-    this.phase += 1;
-    this.timer = this.round_time;
+    // this.timer = this.round_time;
+    if (this.phase < this.timeline.length) {
+      this.phase += 1;
+      this.timer = this.timeline_times[this.phase];
+    }
+    else this.timer = 0;
   }
 
   getActiveCommand() {
@@ -569,6 +574,9 @@ app.post('/create_lobby', function (req, res) {
     assert('allow_duplicate_ships' in ruleset);
     assert(typeof ruleset.allow_duplicate_ships == "boolean");
 
+    
+    
+
     assert('timeline' in ruleset);
     assert(Array.isArray(ruleset.timeline));
     assert(ruleset.timeline.length < 100);
@@ -593,6 +601,13 @@ app.post('/create_lobby', function (req, res) {
       }
       assert(allowed_commands.includes(command));
     }
+
+    assert('timeline_times' in ruleset);
+    assert(Array.isArray(ruleset.timeline_times));
+    assert(ruleset.timeline_times.length == ruleset.timeline.length);
+    for (let i = 1; i < ruleset.timeline_times; i++) {
+      assert(Number.isInteger(ruleset.timeline_times[i]));
+    }
   }
   catch {
     res.status(400).send("Invalid lobby creation parameters.");
@@ -603,7 +618,8 @@ app.post('/create_lobby', function (req, res) {
     return;
   }
   let lobby = new Lobby(
-    req.body.ruleset.timeline, 
+    req.body.ruleset.timeline,
+    req.body.ruleset.timeline_times,
     req.body.ruleset.round_time, 
     req.body.ruleset.team_size, 
     req.body.ruleset.password, 

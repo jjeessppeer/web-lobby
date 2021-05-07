@@ -27,24 +27,11 @@
 
 var timeline_presets = {
   "testing": [
-    // "Waiting for pilots to join",
-    // "Waiting for lobby start",
-    // "T1S1 ship-ban",
-    // "pause",
-    // "T1S1 ship-ban",
-    // "T1S1 ship-ban",
-    // "T1S1 ship-ban",
-    "T1S1 ship-ban",
+    "T1S1 ship-ban 20",
+    "T1S1 gun-ban 30",
+    "T1S1 ship-gun-pick 45", 
+    "T1S1 ship-ban 60",
     "T1S1 gun-ban",
-    "T1S1 ship-gun-pick", 
-    "T1S1 ship-ban",
-    "T1S1 gun-ban",
-    // "T1S1 gun-ban",
-    // "T1S1 gun-ban",
-    // "T1S1 gun-ban",
-    // "T1S1 gun-ban",
-    // "T1S1 gun-ban",
-    // "T2S1 gun-ban",
     "T2S1 ship-gun-pick",
     "T1S2 ship-gun-pick", 
     "T2S2 ship-gun-pick"
@@ -71,28 +58,42 @@ var active_ruleset;
 function loadRuleset(){
   let team_size = parseInt(document.getElementById('nShipsInput').value);
   let round_time = parseInt(document.getElementById('roundTimeInput').value);
-  let timeline;
   // Parse custom timeline.
 
   let timeline_selection = document.getElementById('timelineSelection').value;
+  let timeline_string;
   if (timeline_selection != 'Custom'){
-    timeline = timeline_presets[timeline_selection];
+    timeline_string = timeline_presets[timeline_selection].join('\n');
   }
   else {
     let timeline_string = document.getElementById('timelineInput').value;
-    console.log(timeline_string);
-    timeline = timeline_string.split('\n');
+  }
+  
+  let timeline = timeline_string.split('\n');
+  let timeline_times = [];
+  for (let i=0; i<timeline.length; i++){
+    let args = timeline[i].split(' ');
+    let lastArg = args[args.length - 1];
+    if (/^\d+$/.test(lastArg)) {
+      timeline_times.push(parseInt(lastArg));
+      args = args.slice(0, args.length-1);
+    }
+    else timeline_times.push(round_time);
+    timeline[i] =  args.join(' ');
   }
   let password = document.getElementById('lobbyPwdInput').value;
-  console.log(JSON.stringify(timeline));
 
   let moderated = document.getElementById('moderatedInput').checked;
   let allow_duplicate_ships = document.getElementById('duplicateShipsCheck').checked;
 
+
+  console.log(timeline);
+  console.log(timeline_times);
   return {
     "round_time": round_time,
     "team_size": team_size,
     "timeline": timeline,
+    "timeline_times": timeline_times,
     "moderated": moderated,
     "password": password,
     "allow_duplicate_ships": allow_duplicate_ships
