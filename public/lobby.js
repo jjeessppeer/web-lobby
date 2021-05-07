@@ -73,7 +73,9 @@ function initializeLobby(ruleset) {
   for (let i = 0; i < ruleset.timeline.length; i++) {
     let li = document.createElement('li');
     // li.classList.add('')
-    li.textContent = ruleset.timeline[i];
+    let phase_time = ruleset.timeline_times[i];
+    let time_str = phase_time != 0 ? `${Math.floor(phase_time/60)}:${phase_time%60}` : "";
+    li.textContent = `${ruleset.timeline[i]} ${time_str}`;
     lobby_phases.push(li)
     document.getElementById('lobbyStatus').append(li);
   }
