@@ -31,7 +31,7 @@
           <td><input id="joinNameInput" type="text" placeholder="" value=""></td>
         </tr>
         <tr>
-          <td>Team</td>
+          <td>Role</td>
           <td>
             <select id="joinTeamInput">
               <option value="0">Red pilot 1</option>
@@ -53,6 +53,9 @@
 
   <div id="lobbyScreen" style="display:none">
     <div id="lobbyIdentifier">Lobby identifier (use to invite/join): <span>abc123ABC321</span></div>
+    <div><span id="lobbyInit"></span></div>
+    <br>
+    <br>
     <div><span id="lobbyState"></span></div>
 
     <div id="lobbyPanel">
@@ -94,6 +97,14 @@
           </div>
         </div>
         <div class="lobbyBottomSpace" id="lobbyBanDiv">
+        </div>
+        <div class="lobbyBottomSpace" id="lobbyModeratorPanel">
+          <span>Moderation stuff</span>
+          <div>
+            <button id="lobbyStartButton">Start</button>
+            <button id="lobbyPauseButton">Pause</button>
+            <button id="lobbyUnpauseButton">Unpause</button>
+          </div>
         </div>
       </div>
       <div id="lobbyBlueTeam" class="column">

@@ -1,6 +1,7 @@
 
 var lobby_ships = [];
 var lobby_phases = [];
+var lobby_state = {};
 
 var timer_start = Date.now();
 var timer_time = -1;
@@ -11,6 +12,10 @@ var banned_ships = [];
 var banned_guns = [];
 
 function updateLocal(){
+  if (lobby_state.paused) return;
+  if (active_ruleset.timeline[current_phase] == 'Waiting for pilots to join...') return;
+  if (active_ruleset.timeline[current_phase] == 'Waiting for moderator start...') return;
+  
   let time_passed = Math.round((Date.now() - timer_start)/1000);
   let time_left = Math.max(timer_time - time_passed, 0);
   document.getElementById('lobbyTimer').textContent = `${Math.floor(time_left/60)}:${time_left%60}`;
@@ -43,9 +48,9 @@ function commandCount(query_command, target_phase) {
 }
 
 function initializeLobby(ruleset) {
+  document.getElementById('lobbyInit').textContent = JSON.stringify(ruleset);
   lobby_ships = [];
   lobby_phases = [];
-
 
   console.log(`Initializing lobby ${JSON.stringify(ruleset)}`)
   for (let i = 0; i < ruleset.team_size; i++) {
@@ -89,6 +94,15 @@ function initializeLobby(ruleset) {
 
   document.querySelector('#lobbyIdentifier > span').textContent = current_lobby_id;
   // setInterval();
+
+  if (user_role != -4){
+    document.getElementById('lobbyModeratorPanel').style.display = 'none';
+  }
+  document.getElementById('lobbyPauseButton').addEventListener('click', postPause);
+  document.getElementById('lobbyUnpauseButton').addEventListener('click', postUnpause);
+  document.getElementById('lobbyStartButton').addEventListener('click', postSkip);
+  
+
   setInterval(updateLocal, 200);
   requestLobbyUpdate();
 }
@@ -110,7 +124,9 @@ function requestLobbyUpdate(){
 
 function updateLobbyState(lobbyStateData, ruleset) {
   document.getElementById('lobbyState').textContent = JSON.stringify(lobbyStateData);
+  document.getElementById('lobbyStartButton').disabled = lobbyStateData.phase != 1;
 
+  lobby_state = lobbyStateData;
   current_phase = lobbyStateData.phase;
 
   // TODO: also add picked ships if ship exclusivity is turned on.
@@ -247,5 +263,16 @@ function postBanLock(){
 
 function postBanSkip(){
   httpxPostRequest("/skip_ban", { "lobby_id": current_lobby_id, "user_token": user_token, "target_phase": current_phase}, (response, status) => {});
+}
 
+function postPause(){
+  httpxPostRequest("/moderator_pause", { "lobby_id": current_lobby_id, "user_token": user_token, "target_phase": current_phase}, (response, status) => {});
+}
+
+function postUnpause(){
+  httpxPostRequest("/moderator_unpause", { "lobby_id": current_lobby_id, "user_token": user_token, "target_phase": current_phase}, (response, status) => {});
+}
+
+function postSkip(){
+  httpxPostRequest("/moderator_skip", { "lobby_id": current_lobby_id, "user_token": user_token, "target_phase": current_phase}, (response, status) => {});
 }

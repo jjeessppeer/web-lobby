@@ -14,11 +14,21 @@ function httpxPostRequest(url, data, callback = null, timeout_callback = null) {
   xhttp.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
   // xhttp.onreadystatechange = callback;
   xhttp.onreadystatechange = () => {
-    if (xhttp.readyState == 4 && callback != null) {
+    if (xhttp.readyState == 4 && callback != null && xhttp.status == 200) {
       callback(xhttp.response, xhttp.status);
+    }
+    else if (xhttp.readyState == 4 && xhttp.status == 400){
+      console.log(xhttp);
+      console.log(xhttp.response);
+      alert(xhttp.response);
     }
   }
   // xhttp.ontimeout = timeout_callback;
+  // xhttp.ontimeout = () => {
+  //   if (xhttp.readyState == 4 && callback != null) {
+  //     alert(xhttp.status + ": " + xhttp.response);
+  //   }
+  // };
   xhttp.send(JSON.stringify(data));
 }
 

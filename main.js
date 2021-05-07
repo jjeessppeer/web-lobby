@@ -9,6 +9,7 @@ const gameData = require('./gameData.js');
 var requestIp = require('request-ip');
 const assert = require('assert');
 const { json } = require('body-parser');
+const { time } = require('console');
 
 const logOpts = {
   fileNamePattern: 'log-<DATE>.log',
@@ -32,17 +33,32 @@ function cleanLobbies() {
 setInterval(cleanLobbies, 1000);
 
 function verifyLobbyRequest(body) {
-  assert('lobby_id' in body);
-  assert('user_token' in body);
-  assert('target_phase' in body);
-  assert(body.lobby_id in lobbies);
-  assert(body.user_token in lobbies[body.lobby_id].members);
-  assert(Number.isInteger(body.target_phase));
+  try {
+    assert('lobby_id' in body);
+    assert('user_token' in body);
+    assert('target_phase' in body);
+    assert(body.lobby_id in lobbies);
+    assert(body.user_token in lobbies[body.lobby_id].members);
+    assert(Number.isInteger(body.target_phase));
+  }
+  catch (error){
+    console.log(error);
+    throw error;
+  }
 }
 
 class Lobby {
-  constructor(timeline, round_time, team_size, password, moderated = false) {
+  constructor(timeline, round_time, team_size, password, moderated) {
+
+    if (moderated){
+      timeline.unshift('Waiting for moderator start...');
+    }
+    timeline.unshift('Waiting for pilots to join...');
+    
     this.timeline = timeline;
+
+
+
     this.round_time = round_time;
     this.team_size = team_size;
     this.password = password;
@@ -56,9 +72,8 @@ class Lobby {
     };
 
     this.phase = 0;
-    this.paused = true;
-    this.lastUsed = Date.now();
-    this.phaseStartTime = Date.now();
+    this.paused = false;
+    this.lastUpdateTime = Date.now();
     this.timer = this.round_time;
 
     do {
@@ -70,6 +85,8 @@ class Lobby {
     this.members = {};
     this.pilots = {};
     this.ships = {};
+    this.moderator_token = undefined;
+    this.moderated = moderated;
     // for (let i=0; i<this.team_size; i++){
     //   this.ships.push([0, [0, 0, 0, 0]]);
     // }
@@ -93,14 +110,22 @@ class Lobby {
   }
 
   update() {
-    // if (this.phase == 0 && Object.keys(this.pilots).length == this.team_size*2) {
-    if (this.phase == 0) {
-      this.phase = 1;
-      this.phaseStartTime = Date.now();
+    let time = Date.now();
+    let delta = (time - this.lastUpdateTime) / 1000.0;
+    this.lastUpdateTime = time;
+
+    if (!this.paused && 
+        this.timeline[this.phase] != 'Waiting for pilots to join...' && 
+        this.timeline[this.phase] != 'Waiting for moderator start...') {
+      this.timer -= delta;
+    }
+    if (this.phase == 0 && Object.keys(this.pilots).length == this.team_size*2) {
+    // if (this.phase == 0) {
+      // this.phase = 1;
+      this.stepPhase();
     }
     if (this.phase >= 1) {
-      let time = Date.now();
-      if (time - this.phaseStartTime > this.round_time * 1000) {
+      if (this.timer <= 0) {
         // Phase timed out.
         let activeCommand = this.getActiveCommand();
         // Check if ban timed out.
@@ -113,7 +138,6 @@ class Lobby {
 
         this.stepPhase();
       }
-      this.timer = this.round_time - (time - this.phaseStartTime) / 1000;
     }
 
     // Make sure builds are valid.
@@ -136,7 +160,6 @@ class Lobby {
 
   stepPhase() {
     this.phase += 1;
-    this.phaseStartTime = Date.now();
     this.timer = this.round_time;
   }
 
@@ -162,12 +185,20 @@ class Lobby {
     // -2 t1 crew
     // -3 spectator
     // -4 moderator
-    // Check if role is taken.
+
+    // Check if pilot slot is taken.
     if (role >= 0) {
       for (const [token, member] of Object.entries(this.members)) {
         if (member.role == role) return false;
       }
     }
+
+    // Check if moderator slot is taken.
+    if (role == -4) {
+      if (!this.moderated || this.moderator_token != undefined) return false;
+      this.moderator_token = user_token;
+    }
+    
 
     this.members[user_token] = {
       "token": user_token,
@@ -187,12 +218,17 @@ class Lobby {
     //  0 role+command is current phase
     // >0 role+command is future phase
     // <0 role+command is past phase
-    let timelineStr = `T${role % 2 == 0 ? "1" : "2"}S${(role - (role % 2)) / 2 + 1} ${command}`;
+    let timelineStr;
+    if (role >= 0){
+      timelineStr = `T${role % 2 == 0 ? "1" : "2"}S${(role - (role % 2)) / 2 + 1} ${command}`;
+    }
+    else {
+      timelineStr = command;
+    }
 
     if (target_phase == undefined) target_phase = this.timeline.indexOf(timelineStr);
     if (this.timeline[target_phase] != timelineStr) return -1;
 
-    // let targetPhase = this.timeline.indexOf(timelineStr);
     return target_phase - this.phase;
   }
 
@@ -361,6 +397,26 @@ class Lobby {
     this.stepPhase();
   }
 
+  pauseTimer(user_token, target_phase) {
+    let role = this.members[user_token].role;
+    if (role != -4) return;
+    this.paused = true;
+  }
+
+  unpauseTimer(user_token, target_phase) {
+    let role = this.members[user_token].role;
+    if (role != -4) return;
+    this.paused = false;
+  }
+
+  skipPhase(user_token, target_phase) {
+    let role = this.members[user_token].role;
+    if (role != -4 || this.phase != target_phase) return;
+    this.stepPhase();
+  }
+
+
+
   getNameList() {
     // Return array of pilot names
     let names = [];
@@ -435,6 +491,7 @@ class Lobby {
     //TODO: only send enemy loadout when locked or picking.
     return {
       "timer": Math.floor(this.timer),
+      "paused": this.paused,
       "phase": this.phase,
       "ships": this.getShipList(user_role),
       "ship_bans": this.getShipBans(),
@@ -482,17 +539,24 @@ app.post('/create_lobby', function (req, res) {
     assert(Array.isArray(ruleset.timeline));
     assert(ruleset.timeline.length < 100);
     const allowed_commands = ['ship-ban', 'gun-ban', 'ship-gun-pick', 'pause'];
-    const allowed_special_commands = ['pause', 'Waiting for pilots to join', 'Waiting for lobby start', 'moderator-start'];
+    // const allowed_special_commands = ['Waiting for pilots to join', 'Waiting for lobby start', 'Waiting for moderator start', 'moderator-start'];
 
     for (let i = 1; i < ruleset.timeline.length; i++) {
       // if (ruleset.timeline[i] == "Waiting for pilots to join") continue;
       // if (ruleset.timeline[i] == "Waiting for lobby start") continue;
-      if (allowed_special_commands.includes(ruleset.timeline[i])) continue;
+      // if (allowed_special_commands.includes(ruleset.timeline[i])) continue;
+
       let [target, command] = ruleset.timeline[i].split(' ');
-      assert(target.charAt(0) == 'T');
-      assert(target.charAt(2) == 'S');
-      assert(/\d/.test(target.charAt(1)));
-      assert(/\d/.test(target.charAt(3)));
+      if (command == undefined){
+        command = target;
+        target = undefined;
+      }
+      if (target != undefined){
+        assert(target.charAt(0) == 'T');
+        assert(target.charAt(2) == 'S');
+        assert(/\d/.test(target.charAt(1)));
+        assert(/\d/.test(target.charAt(3)));
+      }
       assert(allowed_commands.includes(command));
     }
   }
@@ -504,7 +568,7 @@ app.post('/create_lobby', function (req, res) {
     res.status(400).send("Too many currently active lobbies.");
     return;
   }
-  let lobby = new Lobby(req.body.ruleset.timeline, req.body.ruleset.round_time, req.body.ruleset.team_size, req.body.ruleset.password);
+  let lobby = new Lobby(req.body.ruleset.timeline, req.body.ruleset.round_time, req.body.ruleset.team_size, req.body.ruleset.password, req.body.ruleset.moderated);
   lobbies[lobby.lobby_id] = lobby;
   console.log("Created lobby " + lobby.lobby_id);
   res.status(200).json({
@@ -557,7 +621,8 @@ app.post('/join_lobby_2', function (req, res) {
   let token = lobby.addMember(req.body.role, req.body.username);
 
   if (!token) {
-    res.status(400).send("Failed to join lobby: Role already taken.")
+    res.status(400).send("Failed to join lobby: Requested role unavailable.");
+    return;
   }
 
   res.status(200).json({
@@ -673,4 +738,40 @@ app.post('/skip_ban', function (req, res) {
     return;
   }
   lobbies[req.body.lobby_id].skipBan(req.body.user_token, req.body.target_phase);
-})
+});
+
+app.post('/moderator_pause', function(req, res) {
+  try {
+    verifyLobbyRequest(req.body);
+  }
+  catch {
+    res.status(400).send();
+    return;
+  }
+  lobbies[req.body.lobby_id].pauseTimer(req.body.user_token, req.body.target_phase);
+  res.status(200).send();
+});
+
+app.post('/moderator_unpause', function(req, res) {
+  try {
+    verifyLobbyRequest(req.body);
+  }
+  catch {
+    res.status(400).send();
+    return;
+  }
+  lobbies[req.body.lobby_id].unpauseTimer(req.body.user_token, req.body.target_phase);
+  res.status(200).send();
+});
+
+app.post('/moderator_skip', function(req, res) {
+  try {
+    verifyLobbyRequest(req.body);
+  }
+  catch {
+    res.status(400).send();
+    return;
+  }
+  lobbies[req.body.lobby_id].skipPhase(req.body.user_token, req.body.target_phase);
+  res.status(200).send();
+});

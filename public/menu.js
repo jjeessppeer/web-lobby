@@ -27,7 +27,7 @@
 
 var timeline_presets = {
   "testing": [
-    "Waiting for pilots to join",
+    // "Waiting for pilots to join",
     // "Waiting for lobby start",
     // "T1S1 ship-ban",
     // "pause",
@@ -50,8 +50,8 @@ var timeline_presets = {
     "T2S2 ship-gun-pick"
   ],
   "Fyre": [
-    "Waiting for pilots to join",
-    "Waiting for lobby start",
+    // "Waiting for pilots to join",
+    // "Waiting for lobby start",
     "T1S1 ship-ban",
     "T2S1 ship-ban",
     "T1S1 ship-gun-pick",
@@ -85,11 +85,14 @@ function loadRuleset(){
   }
   let password = document.getElementById('lobbyPwdInput').value;
   console.log(JSON.stringify(timeline));
+
+  let moderated = document.getElementById('moderatedInput').checked;
+
   return {
     "round_time": round_time,
     "team_size": team_size,
     "timeline": timeline,
-    "moderated": false,
+    "moderated": moderated,
     "password": password
   }
 }
