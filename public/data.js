@@ -80,7 +80,7 @@ var light_guns = {
   '1': {
     name: "Light Flak",
     img: "images/guns/Light Flak.jpg",
-    type: "LIGHT"
+    gun_type: "LIGHT"
   },
   '2': {
     name: "Gatling",
@@ -177,7 +177,7 @@ var light_guns = {
     img: "images/guns/Nemesis.jpg",
     gun_type: "HEAVY"
   },
-  '20':{  
+  '21':{  
     name: "Detonator [Mk. S]",
     img: "images/guns/Detonator [Mk. S].jpg",
     gun_type: "HEAVY"
