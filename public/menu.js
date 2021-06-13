@@ -43,12 +43,12 @@ var timeline_presets = {
     // "Waiting for lobby start",
     "T1S1 ship-ban 30",
     "T2S1 ship-ban 30",
-    "T1S1 ship-gun-pick 45",
-    "T2S1 ship-gun-pick 45",
+    "T1S1 ship-gun-pick 60",
+    "T2S1 ship-gun-pick 60",
     "T2S1 gun-ban 30",
     "T1S1 gun-ban 30",
-    "T1S2 ship-gun-pick 45",
-    "T2S2 ship-gun-pick 45"
+    "T1S2 ship-gun-pick 60",
+    "T2S2 ship-gun-pick 60"
   ]
 }
 
