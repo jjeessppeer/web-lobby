@@ -53,6 +53,8 @@ function initializeLobby(ruleset) {
   lobby_phases = [];
 
   console.log(`Initializing lobby ${JSON.stringify(ruleset)}`)
+
+  // Initialize ship picking elements
   for (let i = 0; i < ruleset.team_size; i++) {
 
     let red_ship = document.createElement('div', { is: 'lobby-ship-item' });
@@ -66,15 +68,19 @@ function initializeLobby(ruleset) {
     document.getElementById("lobbyRedTeam").appendChild(red_ship);
     document.getElementById("lobbyBlueTeam").appendChild(blue_ship);
   }
+
+  // If player is a pilot select that ship.
   if (user_role >= 0) lobby_ships[user_role].setIsMine(true);
   // else lobby_ships[user_role.ship].setIsMine(false);
 
+  // Initialize the timeline displayed in the center.
   document.getElementById('lobbyStatus').innerHTML = '';
   for (let i = 0; i < ruleset.timeline.length; i++) {
     let li = document.createElement('li');
     // li.classList.add('')
     let phase_time = ruleset.timeline_times[i];
-    let time_str = phase_time != 0 ? `${Math.floor(phase_time/60)}:${phase_time%60}` : "";
+    // let time_str = phase_time != 0 ? `${Math.floor(phase_time/60)}:${phase_time%60}` : "";
+    let time_str = phase_time != 0 ? `${phase_time}` : "";
     li.textContent = `${ruleset.timeline[i]} ${time_str}`;
     lobby_phases.push(li)
     document.getElementById('lobbyStatus').append(li);

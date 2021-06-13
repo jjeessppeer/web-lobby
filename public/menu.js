@@ -68,7 +68,7 @@ function loadRuleset(){
     timeline_string = timeline_presets[timeline_selection].join('\n');
   }
   else {
-    let timeline_string = document.getElementById('timelineInput').value;
+    timeline_string = document.getElementById('timelineInput').value;
   }
   
   let timeline = timeline_string.split('\n');
