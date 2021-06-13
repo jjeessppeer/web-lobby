@@ -127,7 +127,6 @@ function initializeMenu() {
   });
   // Lobby join
   document.getElementById("joinLobbyBtn").addEventListener('click', event => {
-    event.target.disabled = true;
     let lobby_id = document.getElementById('lobbyIdInput').value;
     let password = document.getElementById('joinLobbyPassword').value;
     joinLobby1(lobby_id, password);
@@ -152,27 +151,42 @@ function closeJoinModal(){
 
 function joinLobby1(lobby_id, password) {
   console.log(`Attempting to join_1 lobby ${lobby_id} ${password}`);
-  httpxPostRequest("/join_lobby_1", { "lobby_id": lobby_id, "password": password }, (response, status) => {
-    response = JSON.parse(response);
-    console.log(`Join_1 OK ${response.lobby_id}`);
-    current_lobby_id = response.lobby_id;
-    openJoinModal(response.lobby_id);
-  });
+  
+  document.getElementById('joinLobbyBtn').disabled = true;
+  httpxPostRequest("/join_lobby_1", { "lobby_id": lobby_id, "password": password }, 
+    (response, status) => {
+      response = JSON.parse(response);
+      console.log(`Join_1 OK ${response.lobby_id}`);
+      current_lobby_id = response.lobby_id;
+      openJoinModal(response.lobby_id);
+    },
+    (response) => {
+      document.getElementById('joinLobbyBtn').disabled = false;
+      // if (response == "Lobby with ID does not exist.")
+      alert(response);
+    });
 }
 
 function joinLobby2(name, role) {
   console.log(`Attempting to join_2 lobby ${current_lobby_id} ${name} ${role}`);
-  httpxPostRequest("/join_lobby_2", { "lobby_id": current_lobby_id, "username": name, "role": role }, (response, status) => {
-    response = JSON.parse(response);
-    console.log(`Join_2 OK ${JSON.stringify(response)}`);
-    user_token = response.token;
-    active_ruleset = response.ruleset;
-    user_role = response.role;
-    closeJoinModal();
-    initializeLobby(active_ruleset);
-    document.getElementById("lobbyScreen").style.display = "block";
-    document.getElementById("startScreen").style.display = "none";
-  });
+
+  document.getElementById("join2Btn").disabled = true;
+  httpxPostRequest("/join_lobby_2", { "lobby_id": current_lobby_id, "username": name, "role": role }, 
+    (response, status) => {
+      response = JSON.parse(response);
+      console.log(`Join_2 OK ${JSON.stringify(response)}`);
+      user_token = response.token;
+      active_ruleset = response.ruleset;
+      user_role = response.role;
+      closeJoinModal();
+      initializeLobby(active_ruleset);
+      document.getElementById("lobbyScreen").style.display = "block";
+      document.getElementById("startScreen").style.display = "none";
+    },
+    (response) => {
+      document.getElementById("join2Btn").disabled = false;
+      alert(response);
+    });
 }
 
 
