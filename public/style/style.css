@@ -38,3 +38,16 @@ body {
     border: 1px solid #888;
     width: 80%;
 }
+
+.footer {
+    position: fixed;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    background-color: var(--dark);
+    color: var(--border);
+    border-top: 1px var(--accent);
+}
+.footer > a {
+    color: var(--border);
+}
