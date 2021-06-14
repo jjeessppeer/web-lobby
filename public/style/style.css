@@ -41,6 +41,8 @@ body {
 
 .footer {
     position: fixed;
+    display: flex;
+    flex-direction: row;
     left: 0;
     bottom: 0;
     width: 100%;
@@ -50,4 +52,15 @@ body {
 }
 .footer > a {
     color: var(--border);
+}
+
+.footer > div {
+    flex-grow: 1;
+    /* justify-content: right; */
+    text-align: right;
+    /* align-items: ; */
+}
+
+#warningInfobox {
+    color: red;
 }

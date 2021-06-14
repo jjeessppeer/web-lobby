@@ -25,7 +25,15 @@
   <div class="footer">
     <a href="https://github.com/jjeessppeer/web-lobby" target="_blank">GitHub</a>
     <a href="https://discordapp.com/users/224944294350422018" target="_blank">Discord</a>
+    <div>
+      <input type="checkbox" id="debugCheckbox" autocomplete="off">
+      <label for="debugCheckbox">Debug mode</label>
+    </div>
   </div>
+
+  <!-- <div id="warningInfobox">
+    A request timed out. May indicate connection loss.
+  </div> -->
 
   <div id="imagePreload" style="display:none;">
     <img src="images/ships/Unknown.jpg" style="width:10px">
@@ -99,10 +107,10 @@
 
   <div id="lobbyScreen" style="display:none">
     <div id="lobbyIdentifier">Lobby identifier (use to invite/join): <span>abc123ABC321</span></div>
-    <div><span id="lobbyInit"></span></div>
+    <div><span id="lobbyInit" style="display:none;"></span></div>
     <br>
     <br>
-    <div><span id="lobbyState"></span></div>
+    <div><span id="lobbyState" style="display:none;"></span></div>
 
     <div id="lobbyPanel">
       <div id="lobbyRedTeam" class="column">
@@ -218,11 +226,11 @@
       <table id="joinSettingsTable" class="settingsTable">
         <tr>
           <td>Lobby id</td>
-          <td><input id="lobbyIdInput" type="text" placeholder="" value=""></td>
+          <td><input id="lobbyIdInput" type="text" placeholder="" value="" autocomplete="off"></td>
         </tr>
         <tr>
           <td>Password</td>
-          <td><input id="joinLobbyPassword" type="text" placeholder="" value=""></td>
+          <td><input id="joinLobbyPassword" type="text" placeholder="" value="" autocomplete="off"></td>
         </tr>
       </table>
       <button id="joinLobbyBtn">Join lobby</button>
@@ -243,6 +251,18 @@
         dropdowns[i].classList.remove('active');
       }
     });
+
+    document.getElementById('debugCheckbox').addEventListener('change', (event) => {
+      let checked = event.target.checked;
+      if (checked){
+        document.getElementById('lobbyInit').style.display = "block";
+        document.getElementById('lobbyState').style.display = "block";
+      }
+      else {
+        document.getElementById('lobbyInit').style.display = "none";
+        document.getElementById('lobbyState').style.display = "none";
+      }
+    })
     
     
   </script>
