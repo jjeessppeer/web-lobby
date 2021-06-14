@@ -146,6 +146,7 @@ function updateLobbyState(lobbyStateData, ruleset) {
     lobby_ships[i].setShip(lobbyStateData.ships[i][0]);
     lobby_ships[i].setGuns(lobbyStateData.ships[i][1]);
     lobby_ships[i].name = lobbyStateData.names[i];
+    lobby_ships[i].updateCanvas();
     lobby_ships[i].setStatus('');
     // lobby_ships[i].setPicking(false);
     lobby_ships[i].classList.toggle('active', false);

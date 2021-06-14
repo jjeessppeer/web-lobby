@@ -7,7 +7,7 @@
     align-items: center; */
 
     min-width: 800px;
-    max-width: 1400px;
+    max-width: 1600px;
     /* border: 3px solid var(--light); */
     padding: 0;
 }
@@ -170,6 +170,11 @@
 .LobbyShipItem{
     /* border-bottom: 2px solid var(--light); */
     padding: 10px;
+    height: 420px;
+    width: 580px;
+    /* display: table; */
+    display: flex;
+    flex-flow: row;
 }
 
 .LobbyShipItem.active{
@@ -186,7 +191,61 @@
     );
 }
 
-.LobbyShipItem.active > div:first-child{
+/* .LobbyShipItem > div{ */
+    /* display: inline-block; */
+    /* height: 100%; */
+    /* display: table-cell; */
+/* } */
+
+
+
+.LobbyShipItem > div:nth-of-type(1){
+    /* width: 270px; */
+    /* flex-grow: 1; */
+    order: 2;
+    /* position: relative; */
+    /* padding-top: 100%; */
+    /* background-color: red; */
+    /* background-color: rgba(255, 0, 0, 0.3); */
+    /* background-color: var(--light); */
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+}
+.LobbyShipItem > div:nth-of-type(2){
+    flex-grow: 1;
+    /* width: 450px; */
+    /* order: 3; */
+}
+
+/* Change order so that the canvas will be on the outside always. */
+#lobbyBlueTeam > .LobbyShipItem > div:nth-of-type(2) {
+    order: 1;
+}
+
+#lobbyRedTeam > .LobbyShipItem > div:nth-of-type(2) {
+    order: 3;
+}
+
+canvas {
+    /* position: absolute; */
+    /* top: 0; */
+    /* left: 0; */
+    /* bottom: 0; */
+    /* right: 0; */
+    /* width: 90%; */
+    width: 250px;
+    /* margin: auto; */
+    margin-right: 10px;
+    margin-left: 0px;
+    height: 400px;
+    /* margin-left: 10px; */
+    /* background-color: rgba(0, 255, 0, 0.3); */
+}
+
+.LobbyShipItem.active > div:nth-of-type(2) > div:first-child{
     font-weight: bold;
 }
 

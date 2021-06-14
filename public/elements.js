@@ -7,22 +7,33 @@ class LobbyShipItem extends HTMLDivElement {
 
     this.classList.add('LobbyShipItem');
     this.innerHTML = `
-            <div>NAME - uninitialized</div>
-            <br>
-            <div>Ship<br></div>
-            <div>Weapons</div>
-            <button>Lock in</button>
-            `;
+      <div>
+        <canvas width="250" height="400">
+          Your browser does not support the HTML5 canvas tag.
+        </canvas>
+      </div>
+      <div>
+        <div>NAME - uninitialized</div>
+        <br>
+        <div><br></div>
+        <div></div>
+        <button>Lock in</button>
+      </div`;
 
     // this.gunSelections = this.querySelector("div::nth-child(3)");
-    this.statusDiv = this.querySelector(":scope>div:nth-of-type(1)");
-    this.shipSelectionRow = this.querySelector(":scope>div:nth-of-type(2)");
-    this.gunSelectionRow = this.querySelector(":scope>div:nth-of-type(3)");
+    this.statusDiv = this.querySelector(":scope > div:nth-of-type(2) > div:nth-of-type(1)");
+    this.shipSelectionRow = this.querySelector(":scope > div:nth-of-type(2) > div:nth-of-type(2)");
+    this.gunSelectionRow = this.querySelector(":scope > div:nth-of-type(2) > div:nth-of-type(3)");
 
     this.shipDropdown = document.createElement('div', { is: 'item-dropdown' });
 
     this.shipDropdown.addEventListener('item-selected', event => this.setShip(event.target.img.dataset.item_id));
-    this.shipDropdown.addEventListener('item-selected', event => {postLoadout(this.getLoadoutArray())});
+    this.shipDropdown.addEventListener('item-selected', event => {
+      postLoadout(this.getLoadoutArray());
+      this.updateCanvas();
+    });
+
+    this.canvas = this.querySelector(":scope > div > canvas");
 
     this.querySelector('button').addEventListener('click', event => {
       lockLoadout();
@@ -43,12 +54,28 @@ class LobbyShipItem extends HTMLDivElement {
     this.setStatus('uninitialized');
   }
 
-  getLoadoutArray(){
+  updateCanvas(){
+    // Update the canvas with the ship preview.
+    
     let shipIdx = parseInt(this.shipDropdown.img.dataset.item_id);
     let gunArray = [];
     this.gunSelectionRow.querySelectorAll('.dropdown').forEach(dropdown => {
       gunArray.push(parseInt(dropdown.img.dataset.item_id));
     });
+    let ship = ships[shipIdx].name;
+    drawShipPreview(this.canvas, shipIdx, gunArray);
+
+  }
+
+  getLoadoutArray(){
+    // Return the loadout array specifying ship
+    let shipIdx = parseInt(this.shipDropdown.img.dataset.item_id);
+    let gunArray = [];
+    this.gunSelectionRow.querySelectorAll('.dropdown').forEach(dropdown => {
+      gunArray.push(parseInt(dropdown.img.dataset.item_id));
+    });
+
+
     return [shipIdx, gunArray];
   }
 
@@ -85,7 +112,7 @@ class LobbyShipItem extends HTMLDivElement {
     if (this.activeShip != undefined && ships[shipIndex].name == ships[this.activeShip].name) return;
     this.activeShip = shipIndex;
 
-    this.gunSelectionRow.innerHTML = "Weapons<br>";
+    this.gunSelectionRow.innerHTML = "<br>";
     this.shipDropdown.img.name = ships[shipIndex].name;
     this.shipDropdown.img.src = ships[shipIndex].img;
     this.shipDropdown.img.dataset.item_id = shipIndex;
@@ -97,7 +124,10 @@ class LobbyShipItem extends HTMLDivElement {
       let filtered_keys = Object.keys(light_guns).filter(a => light_guns[a].gun_type == shipData.guns[i]);
       dropdown.setContent(light_guns, filtered_keys);
       dropdown.setEnabled(this.interactive);
-      dropdown.addEventListener('item-selected', event => {postLoadout(this.getLoadoutArray())});
+      dropdown.addEventListener('item-selected', event => {
+        postLoadout(this.getLoadoutArray());
+        this.updateCanvas();
+      });
       this.gun_dropdowns.push(dropdown);
       this.gunSelectionRow.appendChild(dropdown);
     }
