@@ -16,6 +16,7 @@ function httpxPostRequest(url, data, callback = null, callback400 = null, timeou
   xhttp.onreadystatechange = () => {
     if (xhttp.readyState == 4 && callback != null && xhttp.status == 200) {
       callback(xhttp.response, xhttp.status);
+      document.getElementById('timeoutWarningInfobox').style.display = "none";
     }
     else if (xhttp.readyState == 4 && xhttp.status == 400){
       if (callback400 == null){
@@ -30,7 +31,10 @@ function httpxPostRequest(url, data, callback = null, callback400 = null, timeou
     }
   }
   xhttp.ontimeout = () => {
-    alert("Request timed out. Connection with lobby server was probably lost. \n May need to refresh page to reset.");
+    // alert("Request timed out. Connection with lobby server was probably lost. \n May need to refresh page to reset.");
+    console.error("Request timed out");
+    console.log(xhttp);
+    document.getElementById('timeoutWarningInfobox').style.display = "block";
   }
   // xhttp.ontimeout = timeout_callback;
   // xhttp.ontimeout = () => {

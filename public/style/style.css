@@ -61,6 +61,7 @@ body {
     /* align-items: ; */
 }
 
-#warningInfobox {
-    color: red;
+#timeoutWarningInfobox {
+    color: yellow;
+    display: none;
 }

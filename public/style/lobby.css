@@ -254,10 +254,10 @@ canvas {
 
 
 
-.LobbyShipItem > button{
+.LobbyShipItem > div > button{
     display: none;
 }
-.LobbyShipItem.isMine.picking > button{
+.LobbyShipItem.isMine.picking > div > button{
     display: block;
 }
 
