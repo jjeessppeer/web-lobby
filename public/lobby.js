@@ -125,7 +125,12 @@ function requestLobbyUpdate(){
 
 function updateLobbyState(lobbyStateData, ruleset) {
   document.getElementById('lobbyState').textContent = JSON.stringify(lobbyStateData);
+  
+  // Update moderation panel
   document.getElementById('lobbyStartButton').disabled = lobbyStateData.phase != 1;
+  document.getElementById('lobbyPauseButton').disabled = lobbyStateData.paused || lobbyStateData.phase <= 1;
+  document.getElementById('lobbyUnpauseButton').disabled = !lobbyStateData.paused || lobbyStateData.phase <= 1;
+
 
   lobby_state = lobbyStateData;
   current_phase = lobbyStateData.phase;
