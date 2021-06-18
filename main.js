@@ -11,9 +11,10 @@ const assert = require('assert');
 
 var app = express()
 
-const LOBBY_LIFETIME = 1800;
-const MAX_LOBBIES = 100;
-const MAX_MEMBERS = 50;
+const LOBBY_LIFETIME = 1800; // Seconds until lobby is deleted.
+const MAX_LOBBIES = 100; // Maximum amount of simultaneus lobbies.
+const MAX_MEMBERS = 50; // Maximum amount of members per lobby.
+const TIMER_GRACE_TIME = 3; // Seconds of extra time when timer hits 0.
 
 function removeLobby(lobby_id) {
   clearInterval(lobbies[lobby_id].intervalId);
@@ -77,9 +78,10 @@ class Lobby {
     };
 
     this.phase = 0;
-    this.paused = false;
     this.lastUpdateTime = Date.now();
     this.timer = this.timeline_times[0];
+    this.paused = true;
+    // if (moderated) this.paused = true;
 
     do {
       this.lobby_id = crypto.randomBytes(4).toString('hex');
@@ -116,21 +118,44 @@ class Lobby {
     let delta = (time - this.lastUpdateTime) / 1000.0;
     this.lastUpdateTime = time;
 
-    if (!this.paused && 
-        this.timeline[this.phase] != 'Waiting for pilots to join...' && 
-        this.timeline[this.phase] != 'Waiting for moderator start...') {
-      this.timer -= delta;
-    }
-    if (this.phase == 0 && Object.keys(this.pilots).length == this.team_size*2) {
-    // if (this.phase == 0) {
-      // this.phase = 1;
+
+    // If all pilots has joined, go to next phase.
+    if ( this.timeline[this.phase] == 'Waiting for pilots to join...'
+      && Object.keys(this.pilots).length == this.team_size*2 ) {
+      // Unpause moderated lobby on pilot fill.
+      if ( !this.moderated ) this.paused = false;
       this.stepPhase();
     }
-    if (this.phase >= 1) {
+
+
+
+
+    // If lobby is not paused decrement timer
+    if (!this.paused 
+      // && this.timeline[this.phase] != 'Waiting for pilots to join...' 
+      // && this.timeline[this.phase] != 'Waiting for moderator start...'
+        ) {
+      this.timer -= delta;
+    }
+
+    // // If pilot slots are filled step to phase 1
+    // if (this.phase == 0 && Object.keys(this.pilots).length == this.team_size*2) {
+    // // if (this.phase == 0) {
+    //   // this.phase = 1;
+    //   this.stepPhase();
+    // }
+
+    // Regular pick/ban phase
+    if ( !this.paused
+      && this.timeline[this.phase] != 'Waiting for pilots to join...' 
+      && this.timeline[this.phase] != 'Waiting for moderator start...') {
+
+
+      // Current phase timed out.
       if (this.timer <= 0) {
-        // Phase timed out.
         let activeCommand = this.getActiveCommand();
-        // Check if ban timed out.
+        // Push a null ban
+        // Maybe ban selected item instead?
         if (activeCommand == 'gun-ban') {
           this.gun_bans.push('-1');
         }
@@ -155,6 +180,8 @@ class Lobby {
     // return ships;
 
   }
+
+
 
   stepPhase() {
     // this.timer = this.round_time;

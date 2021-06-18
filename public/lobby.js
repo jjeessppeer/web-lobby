@@ -108,7 +108,7 @@ function initializeLobby(ruleset) {
   }
   document.getElementById('lobbyPauseButton').addEventListener('click', postPause);
   document.getElementById('lobbyUnpauseButton').addEventListener('click', postUnpause);
-  document.getElementById('lobbyStartButton').addEventListener('click', postSkip);
+  document.getElementById('lobbyStartButton').addEventListener('click', postModStart);
   
 
   setInterval(updateLocal, 200);
@@ -278,6 +278,11 @@ function postPause(){
 }
 
 function postUnpause(){
+  httpxPostRequest("/moderator_unpause", { "lobby_id": current_lobby_id, "user_token": user_token, "target_phase": current_phase}, (response, status) => {});
+}
+
+function postModStart(){
+  httpxPostRequest("/moderator_skip", { "lobby_id": current_lobby_id, "user_token": user_token, "target_phase": current_phase}, (response, status) => {});
   httpxPostRequest("/moderator_unpause", { "lobby_id": current_lobby_id, "user_token": user_token, "target_phase": current_phase}, (response, status) => {});
 }
 
