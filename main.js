@@ -152,7 +152,7 @@ class Lobby {
 
 
       // Current phase timed out.
-      if (this.timer <= 0) {
+      if (this.timer <= -TIMER_GRACE_TIME) {
         let activeCommand = this.getActiveCommand();
         // Push a null ban
         // Maybe ban selected item instead?

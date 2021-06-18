@@ -160,8 +160,9 @@ function updateLobbyState(lobbyStateData, ruleset) {
   }
 
   // Update timer
-  document.getElementById('lobbyTimer').textContent = `${Math.floor(lobbyStateData.timer/60)}:${lobbyStateData.timer%60}`;
-  timer_time = lobbyStateData.timer;
+  let timer_display = Math.max(lobbyStateData.timer, 0);
+  document.getElementById('lobbyTimer').textContent = `${Math.floor(timer_display/60)}:${timer_display%60}`;
+  timer_time = timer_display;
   timer_start = Date.now();
 
   let shipBanIdx = 0;
