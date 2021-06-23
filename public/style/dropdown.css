@@ -55,8 +55,6 @@
     cursor: default;
 }
 
-
-
 .dropdown-content div {
     padding-bottom: 0.15em;
     padding-top: 0.15em;
@@ -66,4 +64,16 @@
 .dropdown-content img:hover {
     background-color: var(--light);
     cursor: pointer;
+}
+
+.dropdown > span {
+    position: absolute;
+    /* z-index: 9999; */
+    top: 0;
+    left: 0;
+    /* right: 0; */
+    /* bottom: 0; */
+    user-select: none;
+    margin-left: 5.3em;
+    margin-top: 4.8em;
 }

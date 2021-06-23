@@ -124,6 +124,7 @@ class LobbyShipItem extends HTMLDivElement {
       let filtered_keys = Object.keys(light_guns).filter(a => light_guns[a].gun_type == shipData.guns[i]);
       dropdown.setContent(light_guns, filtered_keys);
       dropdown.setEnabled(this.interactive);
+      dropdown.setText(i+1);
       dropdown.addEventListener('item-selected', event => {
         postLoadout(this.getLoadoutArray());
         this.updateCanvas();
@@ -152,16 +153,20 @@ class ItemDropdown extends HTMLDivElement {
         <div class="dropdown-content">
         </div>
         <img class="dropbtn" src="">
+        <span></span>
         `.trim();
     this.content = this.querySelector(".dropdown-content");
     this.img = this.querySelector('.dropbtn');
     this.querySelector(".dropbtn").addEventListener('click', event => this.toggleDropdown(event));
-    
   }
 
   setEnabled(enable){
     this.enabled = enable;
     this.classList.toggle('disabled', !enable);
+  }
+
+  setText(text){
+    this.querySelector("span").textContent = text;
   }
 
   updateDisabledKeys(disabled_keys){

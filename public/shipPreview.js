@@ -165,5 +165,10 @@ function redrawCanvas(canvas, images, gun_positions){
         let width = 60;
 
         ctx.drawImage(images[i], cx-width/2, cy-width/2, width, width);
+
+        ctx.fillStyle = "rgb(255, 255, 255)";
+        ctx.font = "24px Arial";
+        ctx.textAlign = "center"; 
+        ctx.fillText(i, cx+20, cy+8+18);
     }
 }
