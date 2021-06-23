@@ -95,7 +95,7 @@ class LobbyShipItem extends HTMLDivElement {
 
   setStatus(status){
     this.status = status;
-    this.statusDiv.innerHTML = `${this.name}&nbsp;&nbsp;&nbsp;&nbsp;${status}`;
+    this.statusDiv.textContent = `${this.name}    ${status}`;
   }
 
   setGuns(gunList){
