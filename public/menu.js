@@ -101,6 +101,18 @@ function loadRuleset(){
 
 function initializeMenu() {
 
+  //Query String Handler
+  const urlSearchParams = new URLSearchParams(window.location.search);
+  const params = Object.fromEntries(urlSearchParams.entries());
+  if (params["id"] !== undefined && params["pw"] !== undefined) { //id & pw
+    joinLobby1(params["id"], params["pw"]);
+  } else if (params["id"] !== undefined) { //id & !pw
+    const passwordInput = prompt("Please enter lobby password");
+    if (passwordInput != null) {
+      joinLobby1(params["id"], passwordInput);
+    }
+  }
+
   document.getElementById('timelineInput').value = timeline_presets[document.getElementById('timelineSelection').value].join('\n');
 
   document.getElementById('timelineSelection').addEventListener('change', event => {
