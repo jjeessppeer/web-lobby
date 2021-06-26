@@ -51,7 +51,7 @@ var ships = {
     name: 'Magnate',
     img: "images/ships/Magnate.jpg",
     guns: ["HEAVY", "HEAVY", "LIGHT", "LIGHT", "LIGHT", "LIGHT"],
-    gun_positions: [[349, 505], [186, 505], [305, 357], [231, 356], [326, 455], [209, 455]]
+    gun_positions: [[349, 505], [186, 505], [305, 357], [231, 356], [209, 455], [326, 455]]
   },
   '9': {
     name: 'Crusader',
