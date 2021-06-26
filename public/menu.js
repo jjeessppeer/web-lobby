@@ -47,8 +47,8 @@ var timeline_presets = {
     "T2S1 ship-gun-pick 60",
     "T2S1 gun-ban 30",
     "T1S1 gun-ban 30",
-    "T1S2 ship-gun-pick 60",
-    "T2S2 ship-gun-pick 60"
+    "T1S2 ship-gun-pick 75",
+    "T2S2 ship-gun-pick 75"
   ]
 }
 
