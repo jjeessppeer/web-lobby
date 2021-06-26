@@ -101,7 +101,12 @@ function initializeLobby(ruleset) {
   document.getElementById('lobbyBanDiv').append(shipBanElem);
 
   document.querySelector('#lobbyIdentifier > span').textContent = current_lobby_id;
-  document.querySelector('#lobbyIdentifier').innerHTML += '.&nbsp;&nbsp;(<a href=\"/?id=' + current_lobby_id + '\" style="color: darkcyan">' + 'auto-join link</a>)';
+  document.getElementById('quickjoinText').value = `${window.location.hostname}/?id=${current_lobby_id}&pw=${ruleset.password}`;
+  document.getElementById('quickjoinButton').addEventListener('click', (event)=>{
+    let joinHref = document.getElementById('quickjoinText').value;
+    copyToClipboard(joinHref);
+    event.target.textContent = "copied";
+  });
   // setInterval();
 
   if (user_role != -4){

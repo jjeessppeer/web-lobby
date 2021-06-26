@@ -6,6 +6,17 @@ function arraysEqual(arr1, arr2){
   return true;
 }
 
+function copyToClipboard(str){
+  let el = document.createElement('textarea');
+  el.value = str;
+  el.setAttribute('readonly', '');
+  el.style = {position: 'absolute', left: '-9999px'};
+  document.body.appendChild(el);
+  el.select();
+  document.execCommand('copy');
+  document.body.removeChild(el);
+}
+
 
 function httpxPostRequest(url, data, callback = null, callback400 = null, timeout_callback = null) {
   let xhttp = new XMLHttpRequest();
