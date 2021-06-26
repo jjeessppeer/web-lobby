@@ -101,7 +101,7 @@ function initializeLobby(ruleset) {
   document.getElementById('lobbyBanDiv').append(shipBanElem);
 
   document.querySelector('#lobbyIdentifier > span').textContent = current_lobby_id;
-  document.querySelector('#lobbyIdentifier').innerHTML += '&nbsp;&nbsp;(<a href=\"/?id=' + current_lobby_id + '\" style="color: darkcyan">' + 'auto-join link</a>)';
+  document.querySelector('#lobbyIdentifier').innerHTML += '.&nbsp;&nbsp;(<a href=\"/?id=' + current_lobby_id + '\" style="color: darkcyan">' + 'auto-join link</a>)';
   // setInterval();
 
   if (user_role != -4){
