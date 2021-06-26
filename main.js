@@ -467,14 +467,33 @@ class Lobby {
     // Return the loadouts as viewed by specified role.
     let ships = [];
 
-    // Spectator or moderator gets full info.
+    // // Spectator or moderator gets full info.
+    // if (role == -3 || role == -4){
+    //   for (let i = 0; i < 2 * this.team_size; i++) {
+    //     if (i in this.ships) ships.push(this.ships[i]);
+    //     else ships.push([0, []]);
+    //   }
+    //   return ships;
+    // }
+
+    // Spectators see only locked/picking ships
     if (role == -3 || role == -4){
       for (let i = 0; i < 2 * this.team_size; i++) {
-        if (i in this.ships) ships.push(this.ships[i]);
-        else ships.push([0, []]);
+        if (i in this.ships){
+          if (this.timelineCheck(i, 'ship-gun-pick') <= 0){
+            ships.push(this.ships[i]);
+          }
+          else {
+            ships.push([0, []]);
+          }
+        }
+        else {
+          ships.push([0, []]);
+        }
       }
       return ships;
     }
+    
 
     let team = Math.abs(role%2);
 
