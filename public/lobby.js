@@ -101,7 +101,7 @@ function initializeLobby(ruleset) {
   document.getElementById('lobbyBanDiv').append(shipBanElem);
 
   document.querySelector('#lobbyIdentifier > span').textContent = current_lobby_id;
-  document.getElementById('quickjoinText').value = `${window.location.hostname}/?id=${current_lobby_id}&pw=${ruleset.password}`;
+  document.getElementById('quickjoinText').value = `https://${window.location.hostname}/?id=${current_lobby_id}&pw=${ruleset.password}`;
   document.getElementById('quickjoinButton').addEventListener('click', (event)=>{
     let joinHref = document.getElementById('quickjoinText').value;
     copyToClipboard(joinHref);
