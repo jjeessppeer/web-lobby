@@ -41,14 +41,6 @@ app.use(express.urlencoded({
 }));
 app.use(express.static('public'));
 
-
-app.get('/lobbyb', function (req, res) {
-  let ip = requestIp.getClientIp(req);
-  log.info(ip, " ping.");
-  res.status(200).sendFile(__dirname + "/public/lobby.html");
-  //   res.status(200).send("OK");
-});
-
 app.post('/create_lobby', function (req, res) {
 
   if (Object.keys(lobbies).length >= MAX_LOBBIES){

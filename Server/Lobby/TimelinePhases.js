@@ -75,4 +75,4 @@ class ShipPick extends MultiUserPhase {}
 class GunBan extends MultiUserPhase {}
 class ShipBan extends MultiUserPhase {}
 
-export default { LoadPhaseFromText, WaitingForPilots, WaitingForModerator, Pause, ShipPick, GunBan, ShipBan };
+export default { LoadPhaseFromText, WaitingForPilots, WaitingForModerator, Pause, ShipPick, GunBan, ShipBan, TimedPhase };

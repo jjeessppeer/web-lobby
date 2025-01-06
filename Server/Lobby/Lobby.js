@@ -1,51 +1,15 @@
+import Timeline from "./Timeline.js"
+import TimelinePhases from "./TimelinePhases.js";
+import LobbyState from "./LobbyState.js";
 
+TIMER_GRACE_TIME = 2000;
 
-
-
-function createLobbyStateItem(data, team, active = 0) {
-    // active = 0: pre pick
-    // active = 1: picking
-    // active = 2: locked
-    return {
-        active: active,
-        team: team,
-        data: data
-    }
-}
 
 class Lobby {
     constructor(ruleset, lobby_id) {
         this.lobby_id = lobby_id;
         this.ruleset = ruleset;
-        this.timeline = ruleset.timeline;
-
-        this.lobby_state = {
-            "ships": {
-                "t1": [
-                    {
-                        "locked": false,
-                        "active": 1,
-                        "visible": "t1",
-                        "ship": 123,
-                        "guns": [123, 32, 231, 12312, 123]
-                    }
-                ]
-            },
-            "ship_bans": [
-                createLobbyStateItem(1, 0),
-                createLobbyStateItem(1, 0)
-                
-            ],
-            "gun_bans": [
-
-            ]
-        }
-
-        this.lobby_state = {
-            "ships": {},
-            "ship_bans": {},
-            "gun_bans": {}
-        }
+        this.timeline = new Timeline.LobbyTimeline(ruleset);
 
         // Initialize lobby timing
         this.creation_time = Date.now();
@@ -53,23 +17,14 @@ class Lobby {
         this.paused = true;
         this.timer = this.timeline.getPhaseTimer();
 
-        // Initialize lobby state.
+        // Initialize lobby users.
         this.members = {};
         this.pilots = {};
-        this.ships = {};
-        this.gun_bans = [];
-        this.ship_bans = [];
-        this.gun_ban_previews = [];
-        this.ship_ban_previews = [];
-
         this.moderator_token = undefined;
 
-        for (let i = 0; i < this.timeline.commandCount('gun-ban'); i++) {
-            this.gun_ban_previews.push('0');
-        }
-        for (let i = 0; i < this.timeline.commandCount('ship-ban'); i++) {
-            this.ship_ban_previews.push('1');
-        }
+        // Initialize lobby state.
+        this.state = new LobbyState.LobbyState(this.timeline);
+        console.log(JSON.stringify(this.state));
 
     }
 
@@ -80,48 +35,15 @@ class Lobby {
 
         lobby_phase = this.timeline.getPhase();
 
-        // If all pilots has joined, go to next phase.
-        if (lobby_phase == 'Waiting for pilots to join...'
-            && Object.keys(this.pilots).length == this.team_size * 2) {
-            this.startNextPhase();
-        }
-
         // If lobby is not paused decrement timer
         if (!this.paused) {
             this.timer -= delta;
-            
-            // Current phase timed out.
-            
-            if (this.timer <= -TIMER_GRACE_TIME) {
-
-            }
-
-            
-            this.startNextPhase();
-        }
-
-        
-
-        // Regular pick/ban phase
-        if (!this.paused
-            && this.timeline[this.phase] != 'Waiting for pilots to join...'
-            && this.timeline[this.phase] != 'Waiting for moderator start...') {
-
-
             // Current phase timed out.
             if (this.timer <= -TIMER_GRACE_TIME) {
-                let activeCommand = this.timeline.getActiveCommand();
-                // Push a null ban
-                // Maybe ban selected item instead?
-                if (activeCommand == 'gun-ban') {
-                    this.gun_bans.push('-1');
-                }
-                if (activeCommand == 'ship-ban') {
-                    this.ship_bans.push('-1');
-                }
-
+                this.startNextPhase();
             }
         }
+
 
         // Make sure builds are valid.
         for (let i = 0; i < 2 * this.team_size; i++) {
@@ -140,8 +62,9 @@ class Lobby {
     startNextPhase() {
         this.timeline.stepPhase();
         let lobby_phase = this.timeline.getPhase();
-        if (lobby_phase == 'Waiting for pilots to join...' ||
-            lobby_phase == 'Waiting for moderator start...') {
+   
+        if (lobby_phase instanceof TimelinePhases.WaitingForPilots || 
+            lobby_phase instanceof TimelinePhases.WaitingForModerator) {
             this.paused = true;
         }
         else {
@@ -493,3 +416,6 @@ class Lobby {
         };
     }
 }
+
+
+export default { Lobby };
