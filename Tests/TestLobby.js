@@ -22,3 +22,11 @@ let t = new Timeline.LobbyTimeline(r);
 
 let l = new Lobby.Lobby(r, "123");
 console.log(util.inspect(l, {showHidden: false, depth: null, colors: true}))
+
+
+// setInterval(() => {
+    l.update();
+    console.log(l.state);
+    console.log(l.timer);
+    console.log(l.timeline.getPhase());
+// }, 1000);

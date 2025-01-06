@@ -71,7 +71,7 @@ var ships = {
   }
 };
 
-var light_guns = {
+var guns = {
   '0': {
     name: "Artemis",
     img: "images/guns/Artemis.jpg",
@@ -184,5 +184,4 @@ var light_guns = {
   }
 };
 
-exports.ships = ships;
-exports.guns = light_guns;
+export default { ships, guns}

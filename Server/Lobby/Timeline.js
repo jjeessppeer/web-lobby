@@ -30,13 +30,13 @@ class LobbyTimeline {
 
     getPhase() {
         // Return active timeline phase
-        return this.timeline[this.phase]
+        return this.timeline[this.active_phase]
     }
 
     stepPhase() {
         // Go to next timeline phase.
-        if (this.phase < this.timeline.length) {
-            this.phase += 1;
+        if (this.active_phase < this.timeline.length) {
+            this.active_phase += 1;
         }
     }
 

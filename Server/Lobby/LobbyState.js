@@ -1,10 +1,11 @@
 import TimelinePhases from "./TimelinePhases.js";
+import game_data from "./../gameData.js";
 
 class LobbyState {
     constructor(timeline) {
-        this.ship_picks = [];
-        this.gun_bans = [];
-        this.ship_bans = [];
+        // this.ship_picks = [];
+        // this.gun_bans = [];
+        // this.ship_bans = [];
 
         this.states = [];
 
@@ -30,7 +31,7 @@ class LobbyState {
                 if (phase instanceof TimelinePhases.ShipBan) {
                     // this.ship_bans.push(new ShipBan(phase.phase, user.team, user.ship))
                     this.states.push(new ShipBan(phase.phase, user.team, user.ship))
-                    
+
                 }
                 if (phase instanceof TimelinePhases.ShipPick) {
                     // this.ship_picks.push(new ShipPick(phase.phase, user.team, user.ship))
@@ -43,7 +44,7 @@ class LobbyState {
 
     lockPhase(phase) {
         // Lock all states in specified phase.
-        for (const state in states) {
+        for (const state in this.states) {
             if (state.phase != phase) continue;
             state.locked = true;
         }
@@ -55,7 +56,7 @@ class LobbyState {
         // Returns false if some states are unlocked or if no relevant states exist.
         let all_locked = true;
         let count = 0;
-        for (const state in states) {
+        for (const state in this.states) {
             if (state.phase != phase) continue;
             count++;
             if (!state.locked) {
@@ -73,14 +74,74 @@ class LobbyState {
         return this;
     }
 
-    getBannedShips() {
+    getBannedShips(include_picked = false) {
         // Get a list of banned ships (only locked bans count).
+        return [0, 1, 2];
 
     }
 
     getBannedGuns() {
         // Get a list of banned guns (only locked bans count).
+        return [0, 1, 2];
+    }
 
+    legalizeShipPicks() {
+        for (const state of this.states) {
+            if (!(state instanceof ShipPick)) continue;
+            this.legalizeShipPick(state);
+        }
+    }
+
+    legalizeShipPick(ship_pick) {
+        // Update a ship pick to conform by active restrictions.
+
+        const ship_bans = this.getBannedShips();
+        const gun_bans = this.getBannedGuns();
+
+        // Find first allowed gun and ship for default option. 
+        let default_light_gun = -1;
+        let default_heavy_gun = -1;
+        let default_ship = -1;
+
+        for (const gun_id in game_data.guns) {
+            if (!gun_bans.includes(gun_id) && game_data.guns[gun_id].gun_type == 'LIGHT') {
+                default_light_gun = gun_id;
+                break;
+            }
+        }
+        for (const gun_id in game_data.guns) {
+            if (!gun_bans.includes(gun_id) && game_data.guns[gun_id].gun_type == 'HEAVY') {
+                default_heavy_gun = gun_id;
+                break;
+            }
+        }
+        for (const ship_id in game_data.ships) {
+            if (!ship_bans.includes(ship_id)) {
+                default_ship = ship_id;
+                break;
+            }
+        }
+
+        // Replace banned ship.
+        if (ship_bans.includes(ship_pick.ship_id)) {
+            ship_pick.ship_id = default_ship;
+        }
+
+        // Replace banned or invalid size guns.
+        const ship_item = game_data.ships[ship_pick.ship_id];
+        for (let i = 0; i < ship_item.guns.length; i++) {
+            const gun_id = ship_pick.guns[i];
+            const gun_item = game_data.guns[gun_id];
+            if (
+                ship_bans.includes(gun_id) ||
+                ship_item.guns[i] != gun_item.gun_type
+            ) {
+                if (ship_item.guns[i] == 'HEAVY')
+                    ship_pick.guns[i] = default_heavy_gun
+                else
+                    ship_pick.guns[i] = default_light_gun
+            }
+        }
     }
 }
 
@@ -92,7 +153,7 @@ class ShipPick {
         this.ship_idx = ship_idx;
 
         this.ship_id = 0;
-        this.guns = [];
+        this.guns = [0, 0, 0, 0, 0, 0];
     }
 }
 
