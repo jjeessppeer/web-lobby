@@ -53,7 +53,7 @@ class Lobby {
     }
 
     startNextPhase() {
-        
+        // Go to the next phase in the lobby timeline.
         this.state.lockPhase(this.timeline.active_phase);
         this.timeline.stepPhase();
         let lobby_phase = this.timeline.getPhase();
@@ -113,68 +113,32 @@ class Lobby {
     updateShipPick(loadout, user_token) {
         // Check if user is authorized to make this change.
         if (!user_token in this.members) return false;
-        const ship_idx = this.members[user_token].role;
-        if (ship_idx < 0) return false;
-        
-        let ship = String(loadout[0]);
-        if (!(ship in gameData.ships)) return;
-        let guns = [];
+        const pilot_idx = this.members[user_token].role;
+        if (pilot_idx < 0) return false;
 
-        for (let i = 0; i < gameData.ships[ship].guns.length; i++) {
-            let gun = loadout[1][i];
-            if (!(gun in gameData.guns)) return;
-            guns.push(String(gun));
-        }
-        this.ships[shipIdx] = [ship, guns];
+        const ship_idx = pilot_idx % this.ruleset.team_size;
+        const team_idx = Math.floor(pilot_idx / this.ruleset.team_size);
+        this.state.setShipPick(this.timeline.getPhase(), loadout, team_idx, ship_idx);
     }
 
-    lockLoadout(user_token, target_phase) {
-        // Confirm the active loadout phase.
-        let shipIdx = this.members[user_token].role;
-        if (shipIdx < 0) return;
-        if (this.timelineCheck(shipIdx, 'ship-gun-pick', target_phase) != 0) return;
-        this.stepPhase();
+    updateGunBan(user_token, gun_id, lock = false) {
+        if (!user_token in this.members) return false;
+        const pilot_idx = this.members[user_token].role;
+        if (pilot_idx < 0) return false;
+
+        const ship_idx = pilot_idx % this.ruleset.team_size;
+        const team_idx = Math.floor(pilot_idx / this.ruleset.team_size);
+        this.state.setGunBan(this.timeline.getPhase(), gun_id, team_idx, ship_idx)
     }
 
-    updateGunBan(user_token, target_phase, gun) {
-        let shipIdx = this.members[user_token].role;
-        if (shipIdx < 0) return;
-        if (this.timelineCheck(shipIdx, 'gun-ban', target_phase) != 0) return;
-        if (gun == 0) return;
-        let banIdx = this.commandCount('gun-ban', target_phase);
-        this.gun_ban_previews[banIdx] = String(gun);
-    }
+    updateShipBan(user_token, ship_id, lock = false) {
+        if (!user_token in this.members) return false;
+        const pilot_idx = this.members[user_token].role;
+        if (pilot_idx < 0) return false;
 
-    updateShipBan(user_token, target_phase, ship) {
-        // Update ban preview selection.
-        let shipIdx = this.members[user_token].role;
-        if (shipIdx < 0) return;
-        if (this.timelineCheck(shipIdx, 'ship-ban', target_phase) != 0) return;
-        if (ship == 0) return;
-        let banIdx = this.commandCount('ship-ban', target_phase);
-        this.ship_ban_previews[banIdx] = String(ship);
-    }
-
-    lockBan(user_token, target_phase, timed_out = false) {
-        // Ban timed out, lock null item.
-
-        // Confirm the currently active ban.
-        let shipIdx = this.members[user_token].role;
-        if (shipIdx < 0) return;
-
-        let isShipBan = this.timelineCheck(shipIdx, 'ship-ban', target_phase) == 0;
-        let isGunBan = this.timelineCheck(shipIdx, 'gun-ban', target_phase) == 0;
-        if (!isShipBan && !isGunBan) return;
-
-        if (isShipBan) {
-            let banIdx = this.commandCount('ship-ban', target_phase);
-            this.ship_bans.push(this.ship_ban_previews[banIdx]);
-        }
-        if (isGunBan) {
-            let banIdx = this.commandCount('gun-ban', target_phase);
-            this.gun_bans.push(this.gun_ban_previews[banIdx]);
-        }
-        this.stepPhase();
+        const ship_idx = pilot_idx % this.ruleset.team_size;
+        const team_idx = Math.floor(pilot_idx / this.ruleset.team_size);
+        this.state.setShipBan(this.timeline.getPhase(), ship_id, team_idx, ship_idx)
     }
 
     skipBan(user_token, target_phase) {

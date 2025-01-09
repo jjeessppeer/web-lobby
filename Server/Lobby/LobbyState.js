@@ -2,11 +2,9 @@ import TimelinePhases from "./TimelinePhases.js";
 import game_data from "./../gameData.js";
 
 class LobbyState {
-    constructor(timeline) {
-        // this.ship_picks = [];
-        // this.gun_bans = [];
-        // this.ship_bans = [];
+    // Data structure for lobby state. Contains things mutable by users.
 
+    constructor(timeline) {
         this.states = [];
 
         // Construct initial state based on lobby timeline 
@@ -15,6 +13,7 @@ class LobbyState {
 
     loadFromTimeline(timeline) {
         // Load initial state from timeline.
+        // TODO: Validate if state is ok. Check that all ships will be picked once.
         // TODO: this is all ugly as hell. Redo timeline data format for easier extraction.
         for (const phase of timeline.timeline) {
             if (!(
@@ -92,6 +91,57 @@ class LobbyState {
         }
     }
 
+    setShipPick(phase, loadout, team_idx, ship_idx) {
+        // Set a ship pick to the specified loadout.
+
+        // Find and clone correct state.
+        const state_idx = this.states.findIndex(
+            s => (s instanceof ShipPick && s.team_idx == team_idx && s.ship_idx == ship_idx));
+        if (this.states[state_idx].locked) return;
+        
+        const cloned_pick = structuredClone(this.states[state_idx]);
+        
+        // Update pick state to new loadout.
+        if (!(loadout.ship_id in game_data.ships)) return;
+        cloned_pick.ship_id = loadout.ship_id;
+        for (let i = 0; i < game_data.ships[loadout.ship_id].guns.length; i++) {
+            if (!(loadout.guns[i] in game_data.guns)) return;
+            cloned_pick.guns[i] = loadout.guns[i];
+        }
+        this.legalizeShipPick(cloned_pick);
+
+        // Replace old state.
+        this.states[state_idx] = cloned_pick;
+    }
+
+    setGunBan(phase, gun_id, team_idx, ship_idx) {
+        const state_idx = this.states.findIndex(
+            s => (s instanceof GunBan && s.team_idx == team_idx && s.ship_idx == ship_idx));
+        const gun_ban = this.states[state_idx]
+
+        // Return if ban is locked or wrong phase.
+        if (gun_ban.locked || gun_ban.phase != phase) return;
+        
+        // Return on invalid gun id.
+        if (!(gun_id in game_data.guns)) return;
+        
+        gun_ban.gun_id = Number(gun_id);
+    }
+
+    setShipBan(phase, ship_id, team_idx, ship_idx) {
+        const state_idx = this.states.findIndex(
+            s => (s instanceof ShipBan && s.team_idx == team_idx && s.ship_idx == ship_idx));
+        const ship_ban = this.states[state_idx]
+
+        // Return if ban is locked or wrong phase.
+        if (ship_ban.locked || ship_ban.phase != phase) return;
+        
+        // Return on invalid gun id.
+        if (!(ship_id in game_data.ships)) return;
+        
+        ship_ban.ship_id = Number(ship_id);
+    }
+
     legalizeShipPick(ship_pick) {
         // Update a ship pick to conform by active restrictions.
 
@@ -151,7 +201,7 @@ class ShipPick {
     constructor(phase, team, ship_idx) {
         this.locked = false;
         this.phase = phase;
-        this.team = team;
+        this.team_idx = team;
         this.ship_idx = ship_idx;
 
         this.ship_id = -1;
@@ -160,13 +210,13 @@ class ShipPick {
 }
 
 class GunBan {
-    constructor(phase, team, ship_idx) {
+    constructor(phase, team_idx, ship_idx) {
         this.locked = false;
         this.phase = phase;
-        this.team = team;
+        this.team_idx = team_idx;
         this.ship_idx = ship_idx;
 
-        this.item_id = -1;
+        this.gun_id = -1;
     }
 }
 
@@ -174,7 +224,7 @@ class ShipBan {
     constructor(phase, team, ship_idx) {
         this.locked = false;
         this.phase = phase;
-        this.team = team;
+        this.team_idx = team;
         this.ship_idx = ship_idx;
 
         this.item_id = -1;
