@@ -4,7 +4,7 @@ import LobbyState from "./LobbyState.js";
 import crypto from "crypto";
 
 const TIMER_GRACE_TIME = 2000;
-
+const MAX_MEMBERS = 20;
 
 class Lobby {
     constructor(ruleset, lobby_id) {
@@ -37,7 +37,7 @@ class Lobby {
         const lobby_phase = this.timeline.getPhase();
         const phase_idx = this.timeline.active_phase;
 
-
+        // Make ships conform to restrictions.
         this.state.legalizeShipPicks();
 
         // If lobby is not paused decrement timer
@@ -46,13 +46,10 @@ class Lobby {
         }
 
         // Go to next phase if timer ran out or all states are locked.
-        if ((!this.paused && this.timer <= -TIMER_GRACE_TIME) ||
-            this.state.getAllStatesLocked(this.timeline.active_phase)) {
+        if ((!this.paused && this.timer != undefined && this.timer <= -TIMER_GRACE_TIME) ||
+            this.state.getAllStatesLocked(phase_idx)) {
             this.startNextPhase();
         }
-        
-        
-
     }
 
     startNextPhase() {
@@ -60,6 +57,7 @@ class Lobby {
         this.state.lockPhase(this.timeline.active_phase);
         this.timeline.stepPhase();
         let lobby_phase = this.timeline.getPhase();
+        this.timer = lobby_phase.time;
    
         if (lobby_phase instanceof TimelinePhases.WaitingForPilots || 
             lobby_phase instanceof TimelinePhases.WaitingForModerator) {
@@ -70,9 +68,10 @@ class Lobby {
         }
     }
 
-
     addMember(role, name) {
         if (Object.keys(this.members).length >= MAX_MEMBERS) return false;
+
+        // Generate a unique user token.
         let user_token;
         do {
             user_token = crypto.randomBytes(4).toString('hex');
@@ -111,18 +110,12 @@ class Lobby {
         return user_token;
     }
 
-    
-
-    updateLoadout(loadout, user_token, target_phase) {
-        loadout[0] = String(loadout[0]);
-        loadout[1] = loadout[1].map(String);
-
-        let shipIdx = this.members[user_token].role;
-        if (shipIdx < 0) return;
-        // if (this.isLocked(shipIdx)) return;
-        if (this.timelineCheck(shipIdx, 'ship-gun-pick', target_phase) < 0) return;
-        loadout = this.legalizeLoadout(loadout[0], loadout[1]);
-        // if (!this.loadoutAllowed(loadout[0], loadout[1])) return;
+    updateShipPick(loadout, user_token) {
+        // Check if user is authorized to make this change.
+        if (!user_token in this.members) return false;
+        const ship_idx = this.members[user_token].role;
+        if (ship_idx < 0) return false;
+        
         let ship = String(loadout[0]);
         if (!(ship in gameData.ships)) return;
         let guns = [];

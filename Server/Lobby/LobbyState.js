@@ -76,7 +76,7 @@ class LobbyState {
 
     getBannedShips(include_picked = false) {
         // Get a list of banned ships (only locked bans count).
-        return [0, 1, 2];
+        return [0];
 
     }
 
@@ -104,26 +104,27 @@ class LobbyState {
         let default_ship = -1;
 
         for (const gun_id in game_data.guns) {
-            if (!gun_bans.includes(gun_id) && game_data.guns[gun_id].gun_type == 'LIGHT') {
+            if (!gun_bans.includes(Number(gun_id)) && game_data.guns[gun_id].gun_type == 'LIGHT') {
                 default_light_gun = gun_id;
                 break;
             }
         }
         for (const gun_id in game_data.guns) {
-            if (!gun_bans.includes(gun_id) && game_data.guns[gun_id].gun_type == 'HEAVY') {
+            if (!gun_bans.includes(Number(gun_id)) && game_data.guns[gun_id].gun_type == 'HEAVY') {
                 default_heavy_gun = gun_id;
                 break;
             }
         }
         for (const ship_id in game_data.ships) {
-            if (!ship_bans.includes(ship_id)) {
+            if (!ship_bans.includes(Number(ship_id))) {
                 default_ship = ship_id;
                 break;
             }
         }
 
         // Replace banned ship.
-        if (ship_bans.includes(ship_pick.ship_id)) {
+        if (ship_bans.includes(ship_pick.ship_id) ||
+            !(ship_pick.ship_id in game_data.ships)) {
             ship_pick.ship_id = default_ship;
         }
 
@@ -133,7 +134,8 @@ class LobbyState {
             const gun_id = ship_pick.guns[i];
             const gun_item = game_data.guns[gun_id];
             if (
-                ship_bans.includes(gun_id) ||
+                gun_bans.includes(gun_id) ||
+                !(gun_id in game_data.guns) ||
                 ship_item.guns[i] != gun_item.gun_type
             ) {
                 if (ship_item.guns[i] == 'HEAVY')
@@ -152,8 +154,8 @@ class ShipPick {
         this.team = team;
         this.ship_idx = ship_idx;
 
-        this.ship_id = 0;
-        this.guns = [0, 0, 0, 0, 0, 0];
+        this.ship_id = -1;
+        this.guns = [-1, 0, 0, 0, 0, 0];
     }
 }
 

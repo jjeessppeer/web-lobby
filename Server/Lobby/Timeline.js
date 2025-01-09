@@ -45,7 +45,7 @@ class LobbyTimeline {
         const phase = this.getPhase();
         if (phase instanceof TimelinePhases.TimedPhase)
             return phase.time;
-        return -1;
+        return undefined;
     }
 
     getTimelineEventList() {

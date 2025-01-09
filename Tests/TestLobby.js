@@ -20,13 +20,23 @@ let r = new Ruleset.LobbyRuleset(rules_json_2);
 let t = new Timeline.LobbyTimeline(r);
 // console.log(util.inspect(t, {showHidden: false, depth: null, colors: true}))
 
-let l = new Lobby.Lobby(r, "123");
-console.log(util.inspect(l, {showHidden: false, depth: null, colors: true}))
+let lobby = new Lobby.Lobby(r, "123");
+console.log(util.inspect(lobby, {showHidden: false, depth: null, colors: true}));
 
 
-// setInterval(() => {
-    l.update();
-    console.log(l.state);
-    console.log(l.timer);
-    console.log(l.timeline.getPhase());
-// }, 1000);
+lobby.update();
+
+console.log("Adding pilots...");
+lobby.addMember(0, "pilot 0")
+lobby.addMember(3, "pilot 3")
+lobby.addMember(2, "pilot 2")
+lobby.addMember(1, "pilot 1")
+
+
+setInterval(() => {
+    lobby.update();
+    // console.log(l.state);
+    // console.log(lobby.timer);
+    // console.log(lobby.timeline.getPhase());
+    console.log(util.inspect(lobby, {showHidden: false, depth: null, colors: true}))
+}, 1000);

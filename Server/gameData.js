@@ -1,5 +1,5 @@
 var ships = {
-  '0': {
+  0: {
     name: "Unknown",
     img: "images/ships/Unknown.jpg",
     guns: []
