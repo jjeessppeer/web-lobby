@@ -68,11 +68,19 @@ class MultiUserPhase extends TimedPhase {
     }
 }
 
-class WaitingForPilots extends BaseTimelinePhase {}
-class WaitingForModerator extends BaseTimelinePhase {}
-class Pause extends TimedPhase {}
-class ShipPick extends MultiUserPhase {}
-class GunBan extends MultiUserPhase {}
-class ShipBan extends MultiUserPhase {}
+class WaitingForPilots extends BaseTimelinePhase {
+    title = 'Waiting for pilots';
+}
+class WaitingForModerator extends BaseTimelinePhase {
+    title = 'Waiting for moderator';}
+class Pause extends TimedPhase {
+    title = 'Pause'
+}
+class ShipPick extends MultiUserPhase {
+    title = 'Picking ships';}
+class GunBan extends MultiUserPhase {
+    title = 'Ban gun';}
+class ShipBan extends MultiUserPhase {
+    title = 'Ban ship';}
 
 export default { LoadPhaseFromText, WaitingForPilots, WaitingForModerator, Pause, ShipPick, GunBan, ShipBan, TimedPhase };

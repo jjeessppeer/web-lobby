@@ -112,7 +112,7 @@ class Lobby {
 
     updateShipPick(loadout, user_token) {
         // Check if user is authorized to make this change.
-        if (!user_token in this.members) return false;
+        if (!(user_token in this.members)) return false;
         const pilot_idx = this.members[user_token].role;
         if (pilot_idx < 0) return false;
 
@@ -122,7 +122,7 @@ class Lobby {
     }
 
     updateGunBan(user_token, gun_id, lock = false) {
-        if (!user_token in this.members) return false;
+        if (!(user_token in this.members)) return false;
         const pilot_idx = this.members[user_token].role;
         if (pilot_idx < 0) return false;
 
@@ -132,7 +132,7 @@ class Lobby {
     }
 
     updateShipBan(user_token, ship_id, lock = false) {
-        if (!user_token in this.members) return false;
+        if (!(user_token in this.members)) return false;
         const pilot_idx = this.members[user_token].role;
         if (pilot_idx < 0) return false;
 
@@ -158,13 +158,13 @@ class Lobby {
         this.stepPhase();
     }
 
-    pauseTimer(user_token, target_phase) {
+    pauseTimer(user_token) {
         let role = this.members[user_token].role;
         if (role != -4) return;
         this.paused = true;
     }
 
-    unpauseTimer(user_token, target_phase) {
+    unpauseTimer(user_token) {
         let role = this.members[user_token].role;
         if (role != -4) return;
         this.paused = false;
@@ -179,116 +179,44 @@ class Lobby {
     getNameList() {
         // Return array of pilot names
         let names = [];
-        for (let i = 0; i < 2 * this.team_size; i++) {
+        for (let i = 0; i < 2 * this.ruleset.team_size; i++) {
             if (i in this.pilots) names.push(this.pilots[i].name);
-            else names.push("NOT JOINED");
         }
         return names;
     }
 
-    getShipList(role) {
-        // Return the loadouts as viewed by specified role.
-        let ships = [];
+    getLobbyState(user_token) {
+        // Return the lobby state from the perspective of the user.
+        if (!(user_token in this.members)) return false;
+        const role = this.members[user_token].role;
+        
+        // Get the team of the user.
+        let team_idx;
+        if (role == -4 || role == -3) team_idx = -1;
+        else if (role == -1) team_idx = 0;
+        else if (role == -2) team_idx = 1;
+        else if (role >= 0) team_idx = Math.floor(role / this.ruleset.team_size);
+        else return;
 
-        // // Spectator or moderator gets full info.
-        // if (role == -3 || role == -4){
-        //   for (let i = 0; i < 2 * this.team_size; i++) {
-        //     if (i in this.ships) ships.push(this.ships[i]);
-        //     else ships.push([0, []]);
-        //   }
-        //   return ships;
-        // }
-
-        // Spectators see only locked/picking ships
-        if (role == -3 || role == -4) {
-            for (let i = 0; i < 2 * this.team_size; i++) {
-                if (i in this.ships) {
-                    if (this.timelineCheck(i, 'ship-gun-pick') <= 0) {
-                        ships.push(this.ships[i]);
-                    }
-                    else {
-                        ships.push([0, []]);
-                    }
-                }
-                else {
-                    ships.push([0, []]);
-                }
-            }
-            return ships;
-        }
-
-
-        let team = Math.abs(role % 2);
-
-        // Teams gets team info + locked/picking ships
-        for (let i = 0; i < 2 * this.team_size; i++) {
-            if (i in this.ships) {
-                if (i % 2 == team) {
-                    ships.push(this.ships[i]);
-                }
-                else if (this.timelineCheck(i, 'ship-gun-pick') <= 0) {
-                    ships.push(this.ships[i]);
-                }
-                else {
-                    ships.push([0, []]);
-                }
-            }
-            else {
-                ships.push([0, []]);
-            }
-        }
-
-        return ships;
+        return this.state.getObfuscated(team_idx);
     }
 
-    getShipBans() {
-        let shipBans = [];
-        let count = 0;
-        for (let i = 0; i < this.ship_bans.length; i++) {
-            shipBans.push(this.ship_bans[i]);
-        }
-        for (let i = this.ship_bans.length; i < this.ship_ban_previews.length; i++) {
-            shipBans.push(this.ship_ban_previews[i]);
-        }
-        return shipBans;
-    }
-
-    getGunBans() {
-        let shipBans = [];
-        let count = 0;
-        for (let i = 0; i < this.gun_bans.length; i++) {
-            shipBans.push(this.gun_bans[i]);
-        }
-        for (let i = this.gun_bans.length; i < this.gun_ban_previews.length; i++) {
-            shipBans.push(this.gun_ban_previews[i]);
-        }
-        return shipBans;
-    }
-
-    getPickedShips() {
-        let picked_ships = [];
-        for (let i = 0; i < 2 * this.team_size; i++) {
-            if (!(i in this.ships)) continue;
-            // Only check locked ships.
-            if (this.timelineCheck(i, 'ship-gun-pick') >= 0) continue;
-            picked_ships.push(this.ships[i][0]);
-        }
-        return picked_ships;
-    }
-
-    lobbyState(user_token) {
-        let user_role = this.members[user_token].role;
-        //TODO: only send enemy loadout when locked or picking.
-        return {
+    getLobbyData(user_token) {
+        // Return the full lobby data needed for the frontend.
+        if (!(user_token in this.members)) return false;
+        return JSON.stringify({
             "timer": Math.floor(this.timer),
             "paused": this.paused,
-            "phase": this.phase,
-            "ships": this.getShipList(user_role),
-            "picked_ships": this.getPickedShips(),
-            "ship_bans": this.getShipBans(),
-            "gun_bans": this.getGunBans(),
+            "phase": this.timeline.active_phase,
+            "timeline": this.timeline,
+            "state": this.getLobbyState(user_token),
             "names": this.getNameList()
-        };
+        });
+    }
+
+    getTimeline(user_token) {
+        if (!(user_token in this.members)) return false;
+        return this.timeline;
     }
 }
 

@@ -27,7 +27,7 @@ console.log(util.inspect(lobby, {showHidden: false, depth: null, colors: true}))
 lobby.update();
 
 console.log("Adding pilots...");
-lobby.addMember(0, "pilot 0")
+let t1 = lobby.addMember(0, "pilot 0")
 lobby.addMember(3, "pilot 3")
 lobby.addMember(2, "pilot 2")
 lobby.addMember(1, "pilot 1")
@@ -38,5 +38,5 @@ setInterval(() => {
     // console.log(l.state);
     // console.log(lobby.timer);
     // console.log(lobby.timeline.getPhase());
-    console.log(util.inspect(lobby, {showHidden: false, depth: null, colors: true}))
+    console.log(util.inspect(lobby.getLobbyData(t1), {showHidden: false, depth: null, colors: true}))
 }, 1000);

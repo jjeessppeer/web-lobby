@@ -68,7 +68,7 @@ class LobbyState {
 
     }
 
-    getObfuscated(team_perspective) {
+    getObfuscated(team_idx) {
         // Return the lobby state from the perspective of a team.
         return this;
     }
@@ -198,6 +198,7 @@ class LobbyState {
 }
 
 class ShipPick {
+    name = 'ShipPick';
     constructor(phase, team, ship_idx) {
         this.locked = false;
         this.phase = phase;
@@ -210,6 +211,7 @@ class ShipPick {
 }
 
 class GunBan {
+    name = 'GunBan';
     constructor(phase, team_idx, ship_idx) {
         this.locked = false;
         this.phase = phase;
@@ -221,6 +223,7 @@ class GunBan {
 }
 
 class ShipBan {
+    name = 'ShipBan';
     constructor(phase, team, ship_idx) {
         this.locked = false;
         this.phase = phase;
